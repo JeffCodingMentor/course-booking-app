@@ -15,7 +15,9 @@ class MemoryDB {
   }
 
   async del(key: string): Promise<number> {
-    return this.store.delete(key) ? 1 : 0;
+    const deletedStore = this.store.delete(key);
+    const deletedSet = this.sets.delete(key);
+    return (deletedStore || deletedSet) ? 1 : 0;
   }
 
   async sismember(key: string, member: string): Promise<number> {
