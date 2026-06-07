@@ -72,3 +72,12 @@ npm run lint
 ```bash
 npm run build
 ```
+
+---
+
+## 🔍 本機資料庫檢視 (Local Debugging)
+在本機開發測試時，若想一鍵檢視記憶體資料庫的即時狀態，請在啟動伺服器後，直接以瀏覽器打開：
+👉 **`http://localhost:3000/api/debug/db`**
+
+該網址會以 JSON 格式序列化並印出目前本機資料庫記憶體內的 `store` 與 `sets` 狀態。
+*注意：此網址僅限非生產環境（Development）執行，在生產環境中將自動回傳 403 Forbidden 錯誤。*

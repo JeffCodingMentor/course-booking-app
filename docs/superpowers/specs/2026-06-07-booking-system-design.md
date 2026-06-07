@@ -153,3 +153,7 @@ We organize our Redis keys to achieve optimal $O(1)$ query time for registration
 ### 5.6 `/api/booking/cancel` (POST)
 * **Body**: `{ date }`
 * **Logic**: Cancels the slot(s) for that date (and companion's slot if applicable).
+
+### 5.7 `/api/debug/db` (GET)
+* **Environment**: Restricted to non-production (returns 403 Forbidden in production).
+* **Response**: Dumps the current MemoryDB's entire store and sets as a JSON object for local verification.
