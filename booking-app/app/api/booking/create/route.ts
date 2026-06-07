@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     // 5. All validation checks passed, now write bookings
     const bookedAt = new Date().toISOString();
-    const fee = isCompanionMode ? 1800 : 2000;
+    const fee = isCompanionMode ? 2700 : 3000;
 
     for (const date of dates) {
       const rawSlots = await db.get(`booking:${date}`);

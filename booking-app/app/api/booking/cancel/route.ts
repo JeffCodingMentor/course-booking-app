@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
+import { sendLineCancelNotification } from '@/lib/notify';
 
 interface BookingSlot {
   studentName: string;
@@ -72,6 +73,17 @@ export async function POST(request: Request) {
       // Remove date from user's booking set
       await db.srem(`student_bookings:${mainStudentName}`, date);
     }
+
+    // Trigger LINE Notification for cancellation
+    const parts = date.split('-');
+    const formattedDate = `${parts[1]}/${parts[2]}`;
+    await sendLineCancelNotification({
+      isCompanionMode: userSlot.bookingType === 'companion',
+      mainStudent: mainStudentName,
+      companionStudent: userSlot.bookingType === 'companion' ? userSlot.companionName : null,
+      dates: [formattedDate],
+      parentPhone: mainParentPhone
+    });
 
     return NextResponse.json({ success: true });
   } catch {

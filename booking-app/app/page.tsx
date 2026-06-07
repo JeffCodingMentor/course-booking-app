@@ -47,6 +47,8 @@ export default function Home() {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [showBookingConfirm, setShowBookingConfirm] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelTargetDate, setCancelTargetDate] = useState<string | null>(null);
 
   // Bookings map for all calendar dates
   const [bookingData, setBookingData] = useState<Record<string, BookingSlot[]>>({});
@@ -273,9 +275,6 @@ export default function Home() {
 
   const handleCancel = async (date: string) => {
     if (!student) return;
-    if (!confirm('您確定要取消此預約嗎？（若為兩人同行預約，將一併取消雙方的預約）')) {
-      return;
-    }
 
     try {
       const res = await fetch('/api/booking/cancel', {
@@ -475,7 +474,7 @@ export default function Home() {
 
               // Calculate slots details
               const remaining = 2 - slots.length;
-              const isSelectable = !isPython && !myBooking && (isCompanionMode ? (remaining === 2) : (remaining >= 1));
+              const isSelectable = !isPython && !myBooking && (isCompanionMode ? (isCompanionVerified && remaining === 2) : (remaining >= 1));
 
               if (isPython) {
                 cellClass += ' python-reserved';
@@ -492,7 +491,8 @@ export default function Home() {
                     className="cancel-btn" 
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCancel(dateStr);
+                      setCancelTargetDate(dateStr);
+                      setShowCancelConfirm(true);
                     }}
                   >
                     取消
@@ -587,6 +587,42 @@ export default function Home() {
             <div className="dialog-actions" style={{ justifyContent: 'center' }}>
               <button className="dialog-btn confirm" onClick={() => setShowSuccessAlert(false)}>
                 確定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelConfirm && (
+        <div className="dialog-overlay">
+          <div className="dialog-box" style={{ maxWidth: '400px' }}>
+            <h2>確認取消預約</h2>
+            <p style={{ color: 'var(--text-secondary)', margin: '1.5rem 0', textAlign: 'center', lineHeight: '1.6' }}>
+              您確定要取消此預約嗎？<br />
+              <span style={{ color: 'var(--accent-rose)', fontWeight: 600 }}>（若為兩人同行預約，將一併取消雙方的預約）</span>
+            </p>
+            <div className="dialog-actions">
+              <button 
+                className="dialog-btn confirm" 
+                style={{ background: 'var(--accent-rose)' }}
+                onClick={() => {
+                  if (cancelTargetDate) {
+                    handleCancel(cancelTargetDate);
+                  }
+                  setShowCancelConfirm(false);
+                  setCancelTargetDate(null);
+                }}
+              >
+                確認取消
+              </button>
+              <button 
+                className="dialog-btn cancel" 
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  setCancelTargetDate(null);
+                }}
+              >
+                保留預約
               </button>
             </div>
           </div>

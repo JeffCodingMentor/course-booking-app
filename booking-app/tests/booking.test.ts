@@ -91,7 +91,7 @@ describe('Booking API Endpoints', () => {
     const db = getDB();
     const slots = (await db.get('booking:2026-07-20')) as TestBookingSlot[];
     expect(slots).toHaveLength(1);
-    expect(slots[0].fee).toBe(2000);
+    expect(slots[0].fee).toBe(3000);
     expect(slots[0].bookingType).toBe('single');
   });
 
@@ -99,7 +99,7 @@ describe('Booking API Endpoints', () => {
     const db = getDB();
     // Fill 1 slot already
     await db.set('booking:2026-07-20', [{
-      studentName: '王五', parentPhone: '0933333333', bookingType: 'single', companionName: null, fee: 2000, bookedAt: new Date().toISOString()
+      studentName: '王五', parentPhone: '0933333333', bookingType: 'single', companionName: null, fee: 3000, bookedAt: new Date().toISOString()
     }]);
 
     const req = new Request('http://localhost/api/booking/create', {

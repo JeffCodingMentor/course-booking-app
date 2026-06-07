@@ -88,14 +88,16 @@ We organize our Redis keys to achieve optimal $O(1)$ query time for registration
 * Toggled via the **"兩人同行 (享 10% 優惠)"** checkbox.
 * **Verification**: Checks if the companion exists in `registered_students`.
   * If unregistered: Displays `「[Name] 未註冊」` in red and **blocks** the booking action. **The main user remains logged in**.
-  * If verified: Displays **"已確認"** in green and unlocks booking, applying the group booking discount in the database.
+  * If verified: Displays **"已確認"** in green and unlocks booking, applying the group booking discount ($2,700 per student instead of $3,000).
+* **Companion Lock Guard**: 兩人同行未確認時，不可開始兩人同行方式預約 (無法在日曆上點選任何可預約的日期單元格)。
 * **Linked Booking**: A companion booking fills **both slots** of selected dates. It requires selected dates to have 2 slots free.
 * **Linked Cancellation**: Canceling a companion booking releases **both slots** for both students.
 
-### 3.5 Multi-Date Selection & Success Alert
+### 3.5 Multi-Date Selection & Custom Confirmations
 * Users click available cells to toggle selection (highlighted in warm orange).
 * A single **「確認預約」** button above the calendar opens a confirmation dialog showing selected dates.
 * On confirmation, it books all selected dates, saves to the database, sends a LINE notification, and displays a popup dialog: **「預約成功，等待老師電話聯繫確認」**.
+* **Cancellation Confirmation**: Clicking the **"取消"** button triggers a custom confirmation dialog overlay: **「確認取消預約，您確定要取消此預約嗎？（若為兩人同行預約，將一併取消雙方的預約）」**. Upon user confirmation, it triggers database deletion and dispatches a cancellation LINE notification.
 
 ### 3.6 LINE Notification via ChatEverywhere
 * Sent as a single aggregated markdown dispatch:
@@ -115,6 +117,21 @@ We organize our Redis keys to achieve optimal $O(1)$ query time for registration
       - 預約人： {主要學生姓名}
       - 同行者： {同行者學生姓名}
       - 日期： {日期一}、{日期二}、...
+      - 電話： {家長電話}
+      ```
+    * **Single Cancellation**:
+      ```markdown
+      ## 取消預約：
+      - 學生： {學生姓名}
+      - 日期： {日期一}
+      - 電話： {家長電話}
+      ```
+    * **Companion Cancellation**:
+      ```markdown
+      ## 取消預約（兩人同行）：
+      - 預約人： {主要學生姓名}
+      - 同行者： {同行者學生姓名}
+      - 日期： {日期一}
       - 電話： {家長電話}
       ```
 
