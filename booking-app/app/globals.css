@@ -172,7 +172,7 @@ body {
 }
 
 .slot-indicator {
-  font-size: 0.875rem;
+  font-size: 18px;
   color: var(--text-secondary);
   margin: 0.5rem 0;
 }
@@ -193,12 +193,14 @@ body {
 }
 
 /* Specific states */
-.date-cell.fully-booked {
-  opacity: 0.65;
-  background: var(--bg-secondary);
+.date-cell.fully-booked,
+.date-cell.python-reserved {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--accent-amber);
 }
 
-.date-cell.fully-booked .slot-indicator {
+.date-cell.fully-booked .slot-indicator,
+.date-cell.python-reserved .slot-indicator {
   color: var(--accent-rose);
 }
 
@@ -229,9 +231,11 @@ body {
 }
 
 /* Reserved Class style and tooltip */
+.date-cell.fully-booked {
+  cursor: default;
+}
+
 .date-cell.python-reserved {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: var(--accent-amber);
   cursor: help;
 }
 

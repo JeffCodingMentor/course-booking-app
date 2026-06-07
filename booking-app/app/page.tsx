@@ -422,7 +422,7 @@ export default function Home() {
             />
             {isCompanionVerified && (
               <span style={{ color: 'var(--accent-emerald)', fontSize: '0.875rem', fontWeight: 600 }}>
-                已驗證 (優惠已解鎖)
+                已確認
               </span>
             )}
             {companionError && (
