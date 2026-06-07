@@ -312,7 +312,7 @@ export default function Home() {
           {errorMsg && <div style={{ color: 'var(--accent-rose)', marginBottom: '1rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
           <form onSubmit={handleLogin}>
             <div className="form-group">
-              <label>學生姓名</label>
+              <label>學生中文姓名</label>
               <input
                 type="text"
                 value={nameInput}
