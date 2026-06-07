@@ -435,7 +435,7 @@ export default function Home() {
       </div>
 
       <div className="calendar-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div className="calendar-header-bar">
           <h2 style={{ margin: 0 }}>預約日期</h2>
           <button
             className="submit-btn"
@@ -455,9 +455,11 @@ export default function Home() {
           <div className="grid-header">週五</div>
 
           {WEEKS_DATA.flatMap((week, weekIdx) =>
-            week.map((dateStr) => {
+            week.map((dateStr, dayIdx) => {
               const dateParts = dateStr.split('-');
               const displayDate = `${dateParts[1]}/${dateParts[2]}`;
+              const weekdays = ['週一', '週二', '週三', '週四', '週五'];
+              const weekdayName = weekdays[dayIdx];
               const isPython = PYTHON_WEEK.includes(dateStr);
               const slots = bookingData[dateStr] || [];
               const myBooking = slots.find((s) => s.studentName === student.name);
@@ -524,7 +526,9 @@ export default function Home() {
                   data-tooltip={isPython ? 'Python' : undefined}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="date-number">{displayDate}</span>
+                    <span className="date-number">
+                      {displayDate} <span className="mobile-weekday">({weekdayName})</span>
+                    </span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       W{weekIdx + 1}
                     </span>
