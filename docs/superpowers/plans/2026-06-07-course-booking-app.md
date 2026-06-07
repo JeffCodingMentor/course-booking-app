@@ -35,11 +35,11 @@
 * Create: `booking-app/tests/jest.setup.js`
 * Create: `booking-app/app/layout.tsx`
 
-- [ ] **Step 1: Scaffold Next.js App Router project**
+- [x] **Step 1: Scaffold Next.js App Router project**
   Run this command in the workspace root (`D:/Jeff/myStudy/antigravity/summer26`):
   `npx -y create-next-app@latest booking-app --ts --eslint --app --import-alias "@/*" --no-tailwind --use-npm --yes`
 
-- [ ] **Step 2: Clean up default styles and setup empty layouts**
+- [x] **Step 2: Clean up default styles and setup empty layouts**
   Replace `booking-app/app/page.tsx` with a blank page:
   ```tsx
   export default function Home() {
@@ -48,11 +48,11 @@
   ```
   Replace `booking-app/app/globals.css` with a blank sheet.
 
-- [ ] **Step 3: Install Jest and Testing dependencies**
+- [x] **Step 3: Install Jest and Testing dependencies**
   Run in `booking-app/` directory:
   `npm install --save-dev jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @types/jest ts-node`
 
-- [ ] **Step 4: Configure Jest**
+- [x] **Step 4: Configure Jest**
   Write to `booking-app/jest.config.js`:
   ```javascript
   const nextJest = require('next/jest');
@@ -69,11 +69,11 @@
   import '@testing-library/jest-dom';
   ```
 
-- [ ] **Step 5: Run npm run dev to verify setup**
+- [x] **Step 5: Run npm run dev to verify setup**
   Run in `booking-app/`: `npm run build` to verify successful scaffolding compilation.
   Expected: Successful compilation without errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
   Run:
   ```bash
   git add booking-app/
@@ -88,10 +88,10 @@
 * Create: `booking-app/lib/db.ts`
 * Test: `booking-app/tests/db.test.ts`
 
-- [ ] **Step 1: Install Vercel KV SDK**
+- [x] **Step 1: Install Vercel KV SDK**
   Run in `booking-app/`: `npm install @vercel/kv`
 
-- [ ] **Step 2: Write failing test for the database client**
+- [x] **Step 2: Write failing test for the database client**
   Write to `booking-app/tests/db.test.ts`:
   ```typescript
   import { getDB } from '../lib/db';
@@ -106,11 +106,11 @@
   });
   ```
 
-- [ ] **Step 3: Run the test to verify failure**
+- [x] **Step 3: Run the test to verify failure**
   Run in `booking-app/`: `npx jest tests/db.test.ts`
   Expected: FAIL (Cannot find module '../lib/db' or 'getDB' is not defined).
 
-- [ ] **Step 4: Implement db.ts with in-memory fallback for local tests**
+- [x] **Step 4: Implement db.ts with in-memory fallback for local tests**
   Write to `booking-app/lib/db.ts`:
   ```typescript
   import { kv } from '@vercel/kv';
@@ -175,11 +175,11 @@
   }
   ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
   Run in `booking-app/`: `npx jest tests/db.test.ts`
   Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
   Run:
   ```bash
   git add booking-app/lib/db.ts booking-app/tests/db.test.ts
@@ -196,7 +196,7 @@
 * Create: `booking-app/app/api/auth/validate-companion/route.ts`
 * Test: `booking-app/tests/auth.test.ts`
 
-- [ ] **Step 1: Write failing integration tests for Authentication APIs**
+- [x] **Step 1: Write failing integration tests for Authentication APIs**
   Write to `booking-app/tests/auth.test.ts`:
   ```typescript
   import { NextRequest } from 'next/server';
@@ -269,11 +269,11 @@
   });
   ```
 
-- [ ] **Step 2: Run the test to verify failure**
+- [x] **Step 2: Run the test to verify failure**
   Run in `booking-app/`: `npx jest tests/auth.test.ts`
   Expected: FAIL (routes do not exist)
 
-- [ ] **Step 3: Implement Auth Login endpoint**
+- [x] **Step 3: Implement Auth Login endpoint**
   Write to `booking-app/app/api/auth/login/route.ts`:
   ```typescript
   import { NextResponse } from 'next/server';
@@ -298,7 +298,7 @@
   }
   ```
 
-- [ ] **Step 4: Implement Auth Register endpoint**
+- [x] **Step 4: Implement Auth Register endpoint**
   Write to `booking-app/app/api/auth/register/route.ts`:
   ```typescript
   import { NextResponse } from 'next/server';
@@ -324,7 +324,7 @@
   }
   ```
 
-- [ ] **Step 5: Implement Validate Companion endpoint**
+- [x] **Step 5: Implement Validate Companion endpoint**
   Write to `booking-app/app/api/auth/validate-companion/route.ts`:
   ```typescript
   import { NextResponse } from 'next/server';
@@ -346,11 +346,11 @@
   }
   ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
   Run in `booking-app/`: `npx jest tests/auth.test.ts`
   Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
   Run:
   ```bash
   git add booking-app/app/api/auth/ booking-app/tests/auth.test.ts
@@ -365,7 +365,7 @@
 * Create: `booking-app/lib/notify.ts`
 * Test: `booking-app/tests/notify.test.ts`
 
-- [ ] **Step 1: Write failing test for the notification utility**
+- [x] **Step 1: Write failing test for the notification utility**
   Write to `booking-app/tests/notify.test.ts`:
   ```typescript
   import { sendLineNotification } from '../lib/notify';
@@ -433,11 +433,11 @@
   });
   ```
 
-- [ ] **Step 2: Run the test to verify failure**
+- [x] **Step 2: Run the test to verify failure**
   Run in `booking-app/`: `npx jest tests/notify.test.ts`
   Expected: FAIL (Cannot find module '../lib/notify')
 
-- [ ] **Step 3: Implement notification client**
+- [x] **Step 3: Implement notification client**
   Write to `booking-app/lib/notify.ts`:
   ```typescript
   export interface NotifyPayload {
@@ -489,11 +489,11 @@
   }
   ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
   Run in `booking-app/`: `npx jest tests/notify.test.ts`
   Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   Run:
   ```bash
   git add booking-app/lib/notify.ts booking-app/tests/notify.test.ts
@@ -509,7 +509,7 @@
 * Create: `booking-app/app/api/booking/cancel/route.ts`
 * Test: `booking-app/tests/booking.test.ts`
 
-- [ ] **Step 1: Write integration tests for Booking validation and writing rules**
+- [x] **Step 1: Write integration tests for Booking validation and writing rules**
   Write to `booking-app/tests/booking.test.ts`:
   ```typescript
   import { POST as createBooking } from '../app/api/booking/create/route';
@@ -641,11 +641,11 @@
   });
   ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
   Run in `booking-app/`: `npx jest tests/booking.test.ts`
   Expected: FAIL (endpoints do not exist)
 
-- [ ] **Step 3: Implement Booking Create API endpoint**
+- [x] **Step 3: Implement Booking Create API endpoint**
   Write to `booking-app/app/api/booking/create/route.ts`:
   ```typescript
   import { NextResponse } from 'next/server';
@@ -775,7 +775,7 @@
   }
   ```
 
-- [ ] **Step 4: Implement Booking Cancel API endpoint**
+- [x] **Step 4: Implement Booking Cancel API endpoint**
   Write to `booking-app/app/api/booking/cancel/route.ts`:
   ```typescript
   import { NextResponse } from 'next/server';
@@ -824,11 +824,11 @@
   }
   ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
   Run in `booking-app/`: `npx jest tests/booking.test.ts`
   Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
   Run:
   ```bash
   git add booking-app/app/api/booking/ booking-app/tests/booking.test.ts
@@ -843,7 +843,7 @@
 * Modify: `booking-app/app/page.tsx` — Incorporate full interactive calendar and registration views.
 * Modify: `booking-app/app/globals.css` — Write CSS custom variables, layout systems, grid components, hover tools, and slide-in animations.
 
-- [ ] **Step 1: Write styling parameters**
+- [x] **Step 1: Write styling parameters**
   Write to `booking-app/app/globals.css` using sleek modern CSS variables and styling classes:
   ```css
   :root {
@@ -1161,7 +1161,7 @@
   }
   ```
 
-- [ ] **Step 2: Implement full page.tsx state engine and renders**
+- [x] **Step 2: Implement full page.tsx state engine and renders**
   Write to `booking-app/app/page.tsx`:
   ```tsx
   'use client';
@@ -1601,7 +1601,7 @@
   }
   ```
 
-- [ ] **Step 3: Create auxiliary GET slots route for loading calendar data**
+- [x] **Step 3: Create auxiliary GET slots route for loading calendar data**
   Write to `booking-app/app/api/booking/slots/route.ts`:
   ```typescript
   import { NextResponse } from 'next/server';
@@ -1623,11 +1623,11 @@
   }
   ```
 
-- [ ] **Step 4: Run dev server compile**
+- [x] **Step 4: Run dev server compile**
   Run in `booking-app/`: `npm run build`
   Expected: Successful compilation of frontend page.tsx bundle and api endpoints.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   Run:
   ```bash
   git add booking-app/app/page.tsx booking-app/app/globals.css booking-app/app/api/booking/slots/route.ts
