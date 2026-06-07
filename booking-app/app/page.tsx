@@ -393,7 +393,7 @@ export default function Home() {
       </div>
 
       <div className="companion-controls">
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}>
+        <label className="companion-toggle-label">
           <input
             type="checkbox"
             checked={isCompanionMode}
@@ -411,22 +411,21 @@ export default function Home() {
         </label>
 
         {isCompanionMode && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="companion-input-wrapper">
             <input
               type="text"
-              className="form-group"
-              style={{ margin: 0, padding: '0.5rem', width: '200px', background: 'white', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+              className="companion-input"
               placeholder="同行者姓名"
               value={companionName}
               onChange={handleCompanionChange}
             />
             {isCompanionVerified && (
-              <span style={{ color: 'var(--accent-emerald)', fontSize: '0.875rem', fontWeight: 600 }}>
+              <span className="companion-status success">
                 已確認
               </span>
             )}
             {companionError && (
-              <span style={{ color: 'var(--accent-rose)', fontSize: '0.875rem', fontWeight: 600 }}>
+              <span className="companion-status error">
                 {companionError}
               </span>
             )}
@@ -447,15 +446,19 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="calendar-grid">
-          <div className="grid-header">週一</div>
-          <div className="grid-header">週二</div>
-          <div className="grid-header">週三</div>
-          <div className="grid-header">週四</div>
-          <div className="grid-header">週五</div>
+        <div className="calendar-grid-container">
+          <div className="grid-headers-wrapper">
+            <div className="grid-header">週一</div>
+            <div className="grid-header">週二</div>
+            <div className="grid-header">週三</div>
+            <div className="grid-header">週四</div>
+            <div className="grid-header">週五</div>
+          </div>
 
-          {WEEKS_DATA.flatMap((week, weekIdx) =>
-            week.map((dateStr, dayIdx) => {
+          <div className="calendar-weeks-list">
+            {WEEKS_DATA.map((week, weekIdx) => (
+              <div key={weekIdx} className="week-group">
+                {week.map((dateStr, dayIdx) => {
               const dateParts = dateStr.split('-');
               const displayDate = `${dateParts[1]}/${dateParts[2]}`;
               const weekdays = ['週一', '週二', '週三', '週四', '週五'];
@@ -537,8 +540,10 @@ export default function Home() {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: '26px' }}>{actionElement}</div>
                 </div>
               );
-            })
-          )}
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
