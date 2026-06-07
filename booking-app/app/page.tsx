@@ -67,6 +67,7 @@ export default function Home() {
     const saved = localStorage.getItem('student_session');
     if (saved) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStudent(JSON.parse(saved));
       } catch {
         localStorage.removeItem('student_session');
@@ -169,7 +170,7 @@ export default function Home() {
     setCompanionError('');
   };
 
-  const checkCompanionStatus = async (name: string) => {
+  const checkCompanionStatus = useCallback(async (name: string) => {
     if (!name.trim()) {
       setIsCompanionVerified(false);
       setCompanionError('');
@@ -189,12 +190,26 @@ export default function Home() {
       setIsCompanionVerified(false);
       setCompanionError('Error checking companion status.');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!companionName.trim()) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      checkCompanionStatus(companionName);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [companionName, checkCompanionStatus]);
 
   const handleCompanionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setCompanionName(val);
-    checkCompanionStatus(val);
+    if (!val.trim()) {
+      setIsCompanionVerified(false);
+      setCompanionError('');
+    }
   };
 
   const myBookingsCount = student
