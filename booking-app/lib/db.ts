@@ -48,6 +48,22 @@ class MemoryDB {
     const set = this.sets.get(key);
     return set ? set.size : 0;
   }
+
+  dump() {
+    const storeObj: Record<string, unknown> = {};
+    for (const [k, v] of this.store.entries()) {
+      try {
+        storeObj[k] = JSON.parse(v);
+      } catch {
+        storeObj[k] = v;
+      }
+    }
+    const setsObj: Record<string, string[]> = {};
+    for (const [k, v] of this.sets.entries()) {
+      setsObj[k] = Array.from(v);
+    }
+    return { store: storeObj, sets: setsObj };
+  }
 }
 
 const mockDbInstance = new MemoryDB();
