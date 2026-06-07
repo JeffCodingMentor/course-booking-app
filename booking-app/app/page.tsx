@@ -46,6 +46,7 @@ export default function Home() {
   // Selected dates for batch booking
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [showBookingConfirm, setShowBookingConfirm] = useState(false);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   // Bookings map for all calendar dates
   const [bookingData, setBookingData] = useState<Record<string, BookingSlot[]>>({});
@@ -260,6 +261,7 @@ export default function Home() {
       if (data.success) {
         setSelectedDates([]);
         setShowBookingConfirm(false);
+        setShowSuccessAlert(true);
         await fetchAllBookings();
       } else {
         alert(`預約失敗: ${data.error}`);
@@ -560,6 +562,22 @@ export default function Home() {
               </button>
               <button className="dialog-btn cancel" onClick={() => setShowBookingConfirm(false)}>
                 取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSuccessAlert && (
+        <div className="dialog-overlay">
+          <div className="dialog-box" style={{ maxWidth: '400px' }}>
+            <h2>預約成功</h2>
+            <p style={{ color: 'var(--text-secondary)', margin: '1.5rem 0', fontSize: '1.1rem', fontWeight: 600, textAlign: 'center' }}>
+              等待老師電話聯繫確認
+            </p>
+            <div className="dialog-actions" style={{ justifyContent: 'center' }}>
+              <button className="dialog-btn confirm" onClick={() => setShowSuccessAlert(false)}>
+                確定
               </button>
             </div>
           </div>
