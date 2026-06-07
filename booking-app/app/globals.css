@@ -1,13 +1,13 @@
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent-indigo: #6366f1;
+  --bg-primary: #fafaf9;
+  --bg-secondary: #f5f5f4;
+  --text-primary: #1c1917;
+  --text-secondary: #78716c;
+  --accent-indigo: #f97316; /* warm orange/amber for accents/button states */
   --accent-emerald: #10b981;
-  --accent-rose: #f43f5e;
+  --accent-rose: #ef4444;
   --accent-amber: #f59e0b;
-  --border-color: #334155;
+  --border-color: #e7e5e4;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -34,7 +34,7 @@ body {
   padding: 2.5rem;
   max-width: 450px;
   margin: 6rem auto;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
 }
 
 .login-card h1 {
@@ -58,7 +58,7 @@ body {
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  background: var(--bg-primary);
+  background: white;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-primary);
@@ -83,7 +83,7 @@ body {
 }
 
 .submit-btn:hover {
-  background: #4f46e5;
+  background: #ea580c;
 }
 
 /* Dashboard Header */
@@ -154,7 +154,7 @@ body {
 }
 
 .date-cell {
-  background: var(--bg-primary);
+  background: white;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 1rem;
@@ -162,7 +162,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
   position: relative;
 }
 
@@ -173,7 +173,7 @@ body {
 
 .slot-indicator {
   font-size: 0.875rem;
-  color: var(--accent-emerald);
+  color: var(--text-secondary);
   margin: 0.5rem 0;
 }
 
@@ -189,12 +189,13 @@ body {
 }
 
 .cell-btn:hover {
-  background: #4f46e5;
+  background: #ea580c;
 }
 
 /* Specific states */
 .date-cell.fully-booked {
-  opacity: 0.5;
+  opacity: 0.65;
+  background: var(--bg-secondary);
 }
 
 .date-cell.fully-booked .slot-indicator {
@@ -203,7 +204,14 @@ body {
 
 .date-cell.my-booking {
   border-color: var(--accent-emerald);
-  background: rgba(16, 185, 129, 0.05);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.date-cell.selected-cell {
+  border-color: var(--accent-indigo);
+  border-width: 2px;
+  background: rgba(249, 115, 22, 0.08);
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
 }
 
 .cancel-btn {
@@ -217,7 +225,7 @@ body {
 }
 
 .cancel-btn:hover {
-  background: #e11d48;
+  background: #dc2626;
 }
 
 /* Reserved Class style and tooltip */
@@ -233,8 +241,8 @@ body {
   bottom: 105%;
   left: 50%;
   transform: translateX(-50%);
-  background: #000;
-  color: #fff;
+  background: #1c1917;
+  color: #fafaf9;
   padding: 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -252,7 +260,7 @@ body {
 
 /* Companion Controls */
 .companion-controls {
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   padding: 1.25rem;
   border-radius: 8px;
@@ -269,7 +277,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -277,13 +285,14 @@ body {
 }
 
 .dialog-box {
-  background: var(--bg-secondary);
+  background: white;
   border: 1px solid var(--border-color);
   padding: 2rem;
   border-radius: 12px;
   max-width: 400px;
   width: 90%;
   text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .dialog-actions {
@@ -304,6 +313,10 @@ body {
   background: var(--accent-indigo);
   border: none;
   color: white;
+}
+
+.dialog-btn.confirm:hover {
+  background: #ea580c;
 }
 
 .dialog-btn.cancel {

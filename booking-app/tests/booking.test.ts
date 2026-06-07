@@ -52,7 +52,7 @@ describe('Booking API Endpoints', () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
       headers: createHeaders(mockUser),
-      body: JSON.stringify({ date: '2026-08-03', isCompanionMode: false, companionName: null })
+      body: JSON.stringify({ dates: ['2026-08-03'], isCompanionMode: false, companionName: null })
     });
     const res = await createBooking(req);
     const data = await res.json();
@@ -70,7 +70,7 @@ describe('Booking API Endpoints', () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
       headers: createHeaders(mockUser),
-      body: JSON.stringify({ date: '2026-07-20', isCompanionMode: false, companionName: null })
+      body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: false, companionName: null })
     });
     const res = await createBooking(req);
     const data = await res.json();
@@ -82,7 +82,7 @@ describe('Booking API Endpoints', () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
       headers: createHeaders(mockUser),
-      body: JSON.stringify({ date: '2026-07-20', isCompanionMode: false, companionName: null })
+      body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: false, companionName: null })
     });
     const res = await createBooking(req);
     const data = await res.json();
@@ -105,7 +105,7 @@ describe('Booking API Endpoints', () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
       headers: createHeaders(mockUser),
-      body: JSON.stringify({ date: '2026-07-20', isCompanionMode: true, companionName: '李四' })
+      body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: true, companionName: '李四' })
     });
     const res = await createBooking(req);
     const data = await res.json();
@@ -118,7 +118,7 @@ describe('Booking API Endpoints', () => {
     const createReq = new Request('http://localhost/api/booking/create', {
       method: 'POST',
       headers: createHeaders(mockUser),
-      body: JSON.stringify({ date: '2026-07-20', isCompanionMode: true, companionName: '李四' })
+      body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: true, companionName: '李四' })
     });
     await createBooking(createReq);
 

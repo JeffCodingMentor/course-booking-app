@@ -13,6 +13,6 @@ describe('Home Page', () => {
     await act(async () => {
       render(<Home />);
     });
-    expect(screen.getByText('Summer Course Booking')).toBeInTheDocument();
+    expect(screen.getByText('Jeff老師暑期班預約系統')).toBeInTheDocument();
   });
 });

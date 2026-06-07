@@ -13,16 +13,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
 
-    const { date, isCompanionMode, companionName } = await request.json();
+    const { dates, isCompanionMode, companionName } = await request.json();
 
-    if (!date) {
+    if (!dates || !Array.isArray(dates) || dates.length === 0) {
       return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
     }
 
     // 1. Python Class Week restriction (08/03 ~ 08/07)
     const pythonWeek = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'];
-    if (pythonWeek.includes(date)) {
-      return NextResponse.json({ success: false, error: 'date_reserved_for_python' });
+    for (const date of dates) {
+      if (pythonWeek.includes(date)) {
+        return NextResponse.json({ success: false, error: 'date_reserved_for_python' });
+      }
+    }
+
+    // Ensure all dates in the request are unique to avoid self-overlap
+    if (new Set(dates).size !== dates.length) {
+      return NextResponse.json({ success: false, error: 'already_booked' });
     }
 
     const db = getDB();
@@ -40,83 +47,93 @@ export async function POST(request: Request) {
 
     // 3. Booking Limit Check (Max 15 bookings total)
     const mainBookingsCount = await db.scard(`student_bookings:${mainStudentName}`);
-    if (mainBookingsCount >= 15) {
+    if (mainBookingsCount + dates.length > 15) {
       return NextResponse.json({ success: false, error: 'booking_limit_exceeded' });
     }
 
     if (isCompanionMode && companionName) {
       const companionBookingsCount = await db.scard(`student_bookings:${companionName}`);
-      if (companionBookingsCount >= 15) {
+      if (companionBookingsCount + dates.length > 15) {
         return NextResponse.json({ success: false, error: 'booking_limit_exceeded' });
       }
     }
 
-    // 4. Overlap Check for Main Student
-    const isMainAlreadyBooked = await db.sismember(`student_bookings:${mainStudentName}`, date);
-    if (isMainAlreadyBooked === 1) {
-      return NextResponse.json({ success: false, error: 'already_booked' });
-    }
+    // 4. Overlap Check & Capacity Check for all dates before modifying state
+    for (const date of dates) {
+      // Overlap Check for Main Student
+      const isMainAlreadyBooked = await db.sismember(`student_bookings:${mainStudentName}`, date);
+      if (isMainAlreadyBooked === 1) {
+        return NextResponse.json({ success: false, error: 'already_booked' });
+      }
 
-    // Overlap Check for Companion
-    if (isCompanionMode && companionName) {
-      const isCompanionAlreadyBooked = await db.sismember(`student_bookings:${companionName}`, date);
-      if (isCompanionAlreadyBooked === 1) {
-        return NextResponse.json({ success: false, error: 'companion_already_booked' });
+      // Overlap Check for Companion
+      if (isCompanionMode && companionName) {
+        const isCompanionAlreadyBooked = await db.sismember(`student_bookings:${companionName}`, date);
+        if (isCompanionAlreadyBooked === 1) {
+          return NextResponse.json({ success: false, error: 'companion_already_booked' });
+        }
+      }
+
+      // Capacity Check
+      const rawSlots = await db.get(`booking:${date}`);
+      const slots = Array.isArray(rawSlots) ? rawSlots : [];
+      const neededSlots = isCompanionMode ? 2 : 1;
+      if (slots.length + neededSlots > 2) {
+        return NextResponse.json({ success: false, error: 'insufficient_slots' });
       }
     }
 
-    // 5. Capacity Check
-    const rawSlots = await db.get(`booking:${date}`);
-    const slots = Array.isArray(rawSlots) ? rawSlots : [];
-
-    const neededSlots = isCompanionMode ? 2 : 1;
-    if (slots.length + neededSlots > 2) {
-      return NextResponse.json({ success: false, error: 'insufficient_slots' });
-    }
-
-    // 6. Record Bookings
+    // 5. All validation checks passed, now write bookings
     const bookedAt = new Date().toISOString();
     const fee = isCompanionMode ? 1800 : 2000;
 
-    const mainSlot = {
-      studentName: mainStudentName,
-      parentPhone: mainParentPhone,
-      bookingType: isCompanionMode ? 'companion' : 'single',
-      companionName: isCompanionMode ? companionName : null,
-      fee,
-      bookedAt
-    };
+    for (const date of dates) {
+      const rawSlots = await db.get(`booking:${date}`);
+      const slots = Array.isArray(rawSlots) ? rawSlots : [];
 
-    const newSlots = [...slots, mainSlot];
-
-    if (isCompanionMode && companionName) {
-      const companionSlot = {
-        studentName: companionName,
+      const mainSlot = {
+        studentName: mainStudentName,
         parentPhone: mainParentPhone,
-        bookingType: 'companion',
-        companionName: mainStudentName,
+        bookingType: isCompanionMode ? 'companion' : 'single',
+        companionName: isCompanionMode ? companionName : null,
         fee,
         bookedAt
       };
-      newSlots.push(companionSlot);
+
+      const newSlots = [...slots, mainSlot];
+
+      if (isCompanionMode && companionName) {
+        const companionSlot = {
+          studentName: companionName,
+          parentPhone: mainParentPhone,
+          bookingType: 'companion',
+          companionName: mainStudentName,
+          fee,
+          bookedAt
+        };
+        newSlots.push(companionSlot);
+      }
+
+      await db.set(`booking:${date}`, newSlots);
+
+      // Update student bookings sets
+      await db.sadd(`student_bookings:${mainStudentName}`, date);
+      if (isCompanionMode && companionName) {
+        await db.sadd(`student_bookings:${companionName}`, date);
+      }
     }
 
-    await db.set(`booking:${date}`, newSlots);
+    // 6. Trigger LINE Notification (formatted as MM/DD)
+    const formattedDates = dates.map(d => {
+      const parts = d.split('-');
+      return `${parts[1]}/${parts[2]}`;
+    });
 
-    // Update student bookings sets
-    await db.sadd(`student_bookings:${mainStudentName}`, date);
-    if (isCompanionMode && companionName) {
-      await db.sadd(`student_bookings:${companionName}`, date);
-    }
-
-    // 7. Trigger LINE Notification
-    const dateParts = date.split('-');
-    const mmdd = `${dateParts[1]}/${dateParts[2]}`;
     await sendLineNotification({
       isCompanionMode,
       mainStudent: mainStudentName,
       companionStudent: isCompanionMode ? companionName : null,
-      dates: [mmdd],
+      dates: formattedDates,
       parentPhone: mainParentPhone
     });
 

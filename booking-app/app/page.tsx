@@ -36,10 +36,18 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showRegConfirm, setShowRegConfirm] = useState(false);
+  
+  // Companion state
   const [isCompanionMode, setIsCompanionMode] = useState(false);
   const [companionName, setCompanionName] = useState('');
   const [isCompanionVerified, setIsCompanionVerified] = useState(false);
   const [companionError, setCompanionError] = useState('');
+
+  // Selected dates for batch booking
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [showBookingConfirm, setShowBookingConfirm] = useState(false);
+
+  // Bookings map for all calendar dates
   const [bookingData, setBookingData] = useState<Record<string, BookingSlot[]>>({});
 
   const fetchAllBookings = useCallback(async () => {
@@ -86,11 +94,12 @@ export default function Home() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nameInput.trim() || !birthdayInput.trim() || !phoneInput.trim()) {
-      setErrorMsg('All fields are required.');
+      setErrorMsg('所有欄位皆為必填。');
       return;
     }
     setLoading(true);
     setErrorMsg('');
+    setSelectedDates([]);
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -117,10 +126,10 @@ export default function Home() {
       } else if (data.error === 'not_registered') {
         setShowRegConfirm(true);
       } else {
-        setErrorMsg(data.error || 'Login failed.');
+        setErrorMsg(data.error === 'invalid_inputs' ? '輸入的資料無效。' : '此學生尚未註冊。');
       }
     } catch {
-      setErrorMsg('Failed to connect to authentication server.');
+      setErrorMsg('無法連接到驗證伺服器。');
     } finally {
       setLoading(false);
     }
@@ -152,10 +161,10 @@ export default function Home() {
         setBirthdayInput('');
         setPhoneInput('');
       } else {
-        setErrorMsg(data.error || 'Registration failed.');
+        setErrorMsg(data.error || '註冊失敗。');
       }
     } catch {
-      setErrorMsg('Failed to register student.');
+      setErrorMsg('註冊學生時發生錯誤。');
     } finally {
       setLoading(false);
     }
@@ -168,6 +177,7 @@ export default function Home() {
     setCompanionName('');
     setIsCompanionVerified(false);
     setCompanionError('');
+    setSelectedDates([]);
   };
 
   const checkCompanionStatus = useCallback(async (name: string) => {
@@ -188,7 +198,7 @@ export default function Home() {
       }
     } catch {
       setIsCompanionVerified(false);
-      setCompanionError('Error checking companion status.');
+      setCompanionError('檢查同行者狀態時發生錯誤。');
     }
   }, []);
 
@@ -218,16 +228,16 @@ export default function Home() {
       ).length
     : 0;
 
-  const handleBook = async (date: string) => {
-    if (!student) return;
+  const handleBatchBook = async () => {
+    if (!student || selectedDates.length === 0) return;
 
     if (isCompanionMode && !isCompanionVerified) {
-      alert('Cannot book in companion mode without a registered companion.');
+      alert('請先輸入並驗證已註冊的同行者姓名。');
       return;
     }
 
-    if (myBookingsCount >= 15) {
-      alert('You have reached the maximum limit of 15 bookings.');
+    if (myBookingsCount + selectedDates.length > 15) {
+      alert(`預約失敗：超出每人最多預約 15 天的限制（您已預約 ${myBookingsCount} 天，本次選擇 ${selectedDates.length} 天）。`);
       return;
     }
 
@@ -241,25 +251,27 @@ export default function Home() {
           'x-user-phone': student.parentPhone
         },
         body: JSON.stringify({
-          date,
+          dates: selectedDates,
           isCompanionMode,
           companionName: isCompanionMode ? companionName.trim() : null
         })
       });
       const data = await res.json();
       if (data.success) {
+        setSelectedDates([]);
+        setShowBookingConfirm(false);
         await fetchAllBookings();
       } else {
-        alert(`Booking failed: ${data.error}`);
+        alert(`預約失敗: ${data.error}`);
       }
     } catch {
-      alert('Failed to book class.');
+      alert('預約失敗，請稍後再試。');
     }
   };
 
   const handleCancel = async (date: string) => {
     if (!student) return;
-    if (!confirm('Are you sure you want to cancel this booking? (If it is a companion booking, both slots will be canceled).')) {
+    if (!confirm('您確定要取消此預約嗎？（若為兩人同行預約，將一併取消雙方的預約）')) {
       return;
     }
 
@@ -278,55 +290,61 @@ export default function Home() {
       if (data.success) {
         await fetchAllBookings();
       } else {
-        alert(`Cancellation failed: ${data.error}`);
+        alert(`取消失敗: ${data.error}`);
       }
     } catch {
-      alert('Failed to cancel booking.');
+      alert('取消失敗，請稍後再試。');
     }
+  };
+
+  const toggleDateSelection = (date: string) => {
+    setSelectedDates((prev) =>
+      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
+    );
   };
 
   if (!student) {
     return (
       <div className="app-container">
         <div className="login-card">
-          <h1>Summer Course Booking</h1>
+          <h1>Jeff老師暑期班預約系統</h1>
           {errorMsg && <div style={{ color: 'var(--accent-rose)', marginBottom: '1rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
           <form onSubmit={handleLogin}>
             <div className="form-group">
-              <label>Student Name (學生姓名)</label>
+              <label>學生姓名</label>
               <input
                 type="text"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                placeholder="e.g. 張三"
+                placeholder="例如：張三"
                 disabled={loading}
                 required
               />
             </div>
             <div className="form-group">
-              <label>Birthday (生日 YYYYMMDD)</label>
+              <label>生日 (YYYYMMDD)</label>
               <input
                 type="text"
                 value={birthdayInput}
                 onChange={(e) => setBirthdayInput(e.target.value)}
-                placeholder="e.g. 20180815"
+                placeholder="例如：20180815"
                 disabled={loading}
                 required
               />
             </div>
             <div className="form-group">
-              <label>Parent Phone (家長電話)</label>
+              <label>家長電話</label>
               <input
                 type="text"
                 value={phoneInput}
                 onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="e.g. 0912345678"
+                placeholder="例如：0912345678"
                 disabled={loading}
                 required
               />
             </div>
             <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? 'Processing...' : 'Enter Dashboard'}
+              {loading ? '處理中...' : '登入系統'}
             </button>
           </form>
         </div>
@@ -334,16 +352,16 @@ export default function Home() {
         {showRegConfirm && (
           <div className="dialog-overlay">
             <div className="dialog-box">
-              <h2>Student Not Found</h2>
+              <h2>學生尚未註冊</h2>
               <p style={{ color: 'var(--text-secondary)', margin: '1rem 0' }}>
-                This student is not registered yet. Would you like to register now using these details?
+                系統中查無此學生資料。是否要使用上述填寫的資訊進行註冊？
               </p>
               <div className="dialog-actions">
                 <button className="dialog-btn confirm" onClick={handleConfirmRegister}>
-                  Yes, Register
+                  確認註冊
                 </button>
                 <button className="dialog-btn cancel" onClick={() => setShowRegConfirm(false)}>
-                  No, Cancel
+                  取消
                 </button>
               </div>
             </div>
@@ -357,23 +375,23 @@ export default function Home() {
     <div className="app-container">
       <div className="dashboard-header">
         <div>
-          <h1>Summer School Dashboard</h1>
+          <h1>Jeff老師暑期班預約系統</h1>
           <div className="profile-stats">
             <div className="stat-badge">
-              Welcome, <strong>{student.name}</strong>
+              歡迎，<strong>{student.name}</strong>
             </div>
             <div className="stat-badge">
-              Bookings: <strong>{myBookingsCount} / 15</strong>
+              預約進度：<strong>{myBookingsCount} / 15 天</strong>
             </div>
           </div>
         </div>
         <button className="logout-btn" onClick={handleLogout}>
-          Log Out
+          登出
         </button>
       </div>
 
       <div className="companion-controls">
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}>
           <input
             type="checkbox"
             checked={isCompanionMode}
@@ -384,9 +402,10 @@ export default function Home() {
                 setIsCompanionVerified(false);
                 setCompanionError('');
               }
+              setSelectedDates([]);
             }}
           />
-          Enable 2-Person Group Booking (兩人同行)
+          兩人同行 (享 10% 優惠)
         </label>
 
         {isCompanionMode && (
@@ -394,14 +413,14 @@ export default function Home() {
             <input
               type="text"
               className="form-group"
-              style={{ margin: 0, padding: '0.5rem', width: '200px' }}
-              placeholder="Companion Name"
+              style={{ margin: 0, padding: '0.5rem', width: '200px', background: 'white', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+              placeholder="同行者姓名"
               value={companionName}
               onChange={handleCompanionChange}
             />
             {isCompanionVerified && (
               <span style={{ color: 'var(--accent-emerald)', fontSize: '0.875rem', fontWeight: 600 }}>
-                Verified (10% Discount Unlocked!)
+                已驗證 (優惠已解鎖)
               </span>
             )}
             {companionError && (
@@ -414,13 +433,24 @@ export default function Home() {
       </div>
 
       <div className="calendar-section">
-        <h2>Weekly Class Schedule</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ margin: 0 }}>預約日期</h2>
+          <button
+            className="submit-btn"
+            style={{ width: 'auto', padding: '0.6rem 2rem', opacity: selectedDates.length > 0 ? 1 : 0.5 }}
+            disabled={selectedDates.length === 0}
+            onClick={() => setShowBookingConfirm(true)}
+          >
+            確認預約 ({selectedDates.length} 天)
+          </button>
+        </div>
+
         <div className="calendar-grid">
-          <div className="grid-header">Mon (一)</div>
-          <div className="grid-header">Tue (二)</div>
-          <div className="grid-header">Wed (三)</div>
-          <div className="grid-header">Thu (四)</div>
-          <div className="grid-header">Fri (五)</div>
+          <div className="grid-header">週一</div>
+          <div className="grid-header">週二</div>
+          <div className="grid-header">週三</div>
+          <div className="grid-header">週四</div>
+          <div className="grid-header">週五</div>
 
           {WEEKS_DATA.flatMap((week, weekIdx) =>
             week.map((dateStr) => {
@@ -434,55 +464,61 @@ export default function Home() {
               let actionElement = null;
               let slotText = '';
 
+              const isSelected = selectedDates.includes(dateStr);
+
+              // Calculate slots details
+              const remaining = 2 - slots.length;
+              const isSelectable = !isPython && !myBooking && (isCompanionMode ? (remaining === 2) : (remaining >= 1));
+
               if (isPython) {
                 cellClass += ' python-reserved';
-                slotText = 'Python Week';
+                slotText = '額滿';
               } else if (myBooking) {
                 cellClass += ' my-booking';
                 const companionText =
                   myBooking.bookingType === 'companion' && myBooking.companionName
-                    ? ` (with ${myBooking.companionName})`
+                    ? `與 ${myBooking.companionName} `
                     : '';
-                slotText = `Booked${companionText}`;
+                slotText = `${companionText}上課`;
                 actionElement = (
-                  <button className="cancel-btn" onClick={() => handleCancel(dateStr)}>
-                    Cancel
+                  <button 
+                    className="cancel-btn" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancel(dateStr);
+                    }}
+                  >
+                    取消
                   </button>
                 );
               } else if (slots.length >= 2) {
                 cellClass += ' fully-booked';
-                slotText = 'Fully Booked (已額滿)';
+                slotText = '額滿';
               } else {
-                const remaining = 2 - slots.length;
-                if (isCompanionMode) {
-                  if (remaining < 2) {
-                    slotText = 'Needs 2 slots';
-                  } else {
-                    slotText = `$1,800/ea (${remaining} left)`;
-                    actionElement = (
-                      <button
-                        className="cell-btn"
-                        onClick={() => handleBook(dateStr)}
-                        disabled={!isCompanionVerified}
-                      >
-                        Book Group
-                      </button>
-                    );
-                  }
+                if (isCompanionMode && remaining < 2) {
+                  cellClass += ' fully-booked';
+                  slotText = '空位 1 (兩人同行需 2 個空位)';
                 } else {
-                  slotText = `$2,000 (${remaining} left)`;
-                  actionElement = (
-                    <button className="cell-btn" onClick={() => handleBook(dateStr)}>
-                      Book Now
-                    </button>
-                  );
+                  slotText = `空位 ${remaining}`;
                 }
               }
+
+              if (isSelected) {
+                cellClass += ' selected-cell';
+              }
+
+              const handleCellClick = () => {
+                if (isSelectable) {
+                  toggleDateSelection(dateStr);
+                }
+              };
 
               return (
                 <div
                   key={dateStr}
                   className={cellClass}
+                  style={{ cursor: isSelectable ? 'pointer' : 'default' }}
+                  onClick={handleCellClick}
                   data-tooltip={isPython ? 'Python' : undefined}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -492,13 +528,43 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="slot-indicator">{slotText}</div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>{actionElement}</div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: '26px' }}>{actionElement}</div>
                 </div>
               );
             })
           )}
         </div>
       </div>
+
+      {showBookingConfirm && (
+        <div className="dialog-overlay">
+          <div className="dialog-box" style={{ maxWidth: '500px' }}>
+            <h2>確認預約</h2>
+            <p style={{ color: 'var(--text-secondary)', margin: '1rem 0', textAlign: 'left', lineHeight: '1.6' }}>
+              您已選擇預約以下日期 ({selectedDates.length} 天)：
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem', maxHeight: '150px', overflowY: 'auto', padding: '0.5rem', background: '#f5f5f4', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              {selectedDates.map(d => {
+                const parts = d.split('-');
+                return <span key={d} style={{ background: 'var(--accent-amber)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>{parts[1]}/{parts[2]}</span>;
+              })}
+            </div>
+            {isCompanionMode && (
+              <p style={{ color: 'var(--accent-emerald)', fontWeight: 600, marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                同行者：{companionName} (已套用兩人同行優惠)
+              </p>
+            )}
+            <div className="dialog-actions">
+              <button className="dialog-btn confirm" onClick={handleBatchBook}>
+                確認送出
+              </button>
+              <button className="dialog-btn cancel" onClick={() => setShowBookingConfirm(false)}>
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
