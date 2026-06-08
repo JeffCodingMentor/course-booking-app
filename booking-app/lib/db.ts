@@ -49,6 +49,28 @@ class MemoryDB {
     return set ? set.size : 0;
   }
 
+  async smembers(key: string): Promise<string[]> {
+    const set = this.sets.get(key);
+    return set ? Array.from(set) : [];
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    const regexPattern = pattern.replace(/\*/g, '.*');
+    const regex = new RegExp(`^${regexPattern}$`);
+    const matchedKeys: string[] = [];
+    for (const k of this.store.keys()) {
+      if (regex.test(k)) {
+        matchedKeys.push(k);
+      }
+    }
+    for (const k of this.sets.keys()) {
+      if (regex.test(k)) {
+        matchedKeys.push(k);
+      }
+    }
+    return matchedKeys;
+  }
+
   dump() {
     const storeObj: Record<string, unknown> = {};
     for (const [k, v] of this.store.entries()) {
