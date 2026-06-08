@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
-import { sendLineCancelNotification } from '@/lib/notify';
 
 interface BookingSlot {
-  studentName: string;
-  parentPhone: string;
+  studentId: string;
+  companionId: string | null;
   bookingType: 'single' | 'companion';
-  companionName: string | null;
   fee: number;
   bookedAt: string;
+}
+
+interface StudentProfile {
+  id: string;
+  name: string;
+  birthday: string;
+  parentPhone: string;
 }
 
 export async function POST(request: Request) {
@@ -26,11 +31,31 @@ export async function POST(request: Request) {
     }
 
     const db = getDB();
+
+    // 4. Find the student profile to retrieve studentId
+    const allKeys = await db.keys('student:*');
+    const studentKeys = allKeys.filter(
+      (key) => key.startsWith('student:') && !key.startsWith('student_lookup:') && !key.startsWith('student_bookings:')
+    );
+
+    let studentId = '';
+    for (const key of studentKeys) {
+      const profile = (await db.get(key)) as StudentProfile | null;
+      if (profile && profile.name === studentName) {
+        studentId = profile.id;
+        break;
+      }
+    }
+
+    if (!studentId) {
+      return NextResponse.json({ success: false, error: 'student_not_found' }, { status: 400 });
+    }
+
     const rawSlots = await db.get(`booking:${date}`);
     const slots = (Array.isArray(rawSlots) ? rawSlots : []) as BookingSlot[];
 
-    // 4. Find the slot for the target student
-    const studentSlotIndex = slots.findIndex((s) => s.studentName === studentName);
+    // Find the slot for the target student
+    const studentSlotIndex = slots.findIndex((s) => s.studentId === studentId);
     if (studentSlotIndex === -1) {
       return NextResponse.json({ success: false, error: 'booking_not_found' });
     }
@@ -39,11 +64,11 @@ export async function POST(request: Request) {
 
     // 5. Handle Single or Companion cancellation
     if (studentSlot.bookingType === 'companion') {
-      const companionName = studentSlot.companionName;
+      const companionId = studentSlot.companionId;
 
       // Filter out both students' slots from this date
       const remainingSlots = slots.filter(
-        (s) => s.studentName !== studentName && s.studentName !== companionName
+        (s) => s.studentId !== studentId && s.studentId !== companionId
       );
 
       if (remainingSlots.length === 0) {
@@ -53,13 +78,13 @@ export async function POST(request: Request) {
       }
 
       // Remove date from both students' booking sets
-      await db.srem(`student_bookings:${studentName}`, date);
-      if (companionName) {
-        await db.srem(`student_bookings:${companionName}`, date);
+      await db.srem(`student_bookings:${studentId}`, date);
+      if (companionId) {
+        await db.srem(`student_bookings:${companionId}`, date);
       }
     } else {
       // Single booking: cancel only target student's slot
-      const remainingSlots = slots.filter((s) => s.studentName !== studentName);
+      const remainingSlots = slots.filter((s) => s.studentId !== studentId);
 
       if (remainingSlots.length === 0) {
         await db.del(`booking:${date}`);
@@ -68,22 +93,25 @@ export async function POST(request: Request) {
       }
 
       // Remove date from target student's booking set
-      await db.srem(`student_bookings:${studentName}`, date);
+      await db.srem(`student_bookings:${studentId}`, date);
     }
 
-    // 6. Trigger LINE Notification for cancellation (formatted as MM/DD)
+    // 6. Bypass LINE notification per requirement
+    /*
     const parts = date.split('-');
     const formattedDate = `${parts[1]}/${parts[2]}`;
     await sendLineCancelNotification({
       isCompanionMode: studentSlot.bookingType === 'companion',
       mainStudent: studentName,
-      companionStudent: studentSlot.bookingType === 'companion' ? studentSlot.companionName : null,
+      companionStudent: studentSlot.bookingType === 'companion' ? companionName : null,
       dates: [formattedDate],
       parentPhone: studentSlot.parentPhone,
     });
+    */
 
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ success: false, error: 'server_error' }, { status: 500 });
   }
 }
+

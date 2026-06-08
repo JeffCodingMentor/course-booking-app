@@ -24,6 +24,7 @@ interface BookingSlot {
 }
 
 interface StudentInfo {
+  id: string;
   name: string;
   birthday: string;
   parentPhone: string;
@@ -65,6 +66,20 @@ export default function AdminDashboard() {
   const [cancelDate, setCancelDate] = useState('');
   const [cancelStudent, setCancelStudent] = useState('');
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+
+  // Edit Student Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editStudentId, setEditStudentId] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editBirthday, setEditBirthday] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  // Delete Student Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteStudentId, setDeleteStudentId] = useState('');
+  const [deleteStudentName, setDeleteStudentName] = useState('');
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   // Authentication check
   useEffect(() => {
@@ -319,6 +334,101 @@ export default function AdminDashboard() {
     }
   };
 
+  // Edit Student Modal trigger and submit
+  const openEditModal = (student: StudentInfo) => {
+    setEditStudentId(student.id);
+    setEditName(student.name);
+    setEditBirthday(student.birthday);
+    setEditPhone(student.parentPhone);
+    setShowEditModal(true);
+  };
+
+  const handleEditStudentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim() || !editBirthday.trim() || !editPhone.trim()) {
+      triggerError('請填寫所有欄位。');
+      return;
+    }
+    setEditSubmitting(true);
+    try {
+      const token = localStorage.getItem('admin_session') || '';
+      const res = await fetch('/api/admin/students/edit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token,
+        },
+        body: JSON.stringify({
+          id: editStudentId,
+          name: editName.trim(),
+          birthday: editBirthday.trim(),
+          parentPhone: editPhone.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(`成功修改學生資料`);
+        setShowEditModal(false);
+        fetchAllData();
+      } else {
+        const errorMap: Record<string, string> = {
+          name_birthday_collision: '此姓名與生日組合已被其他學生使用。',
+          student_not_found: '找不到該學生資料。',
+          invalid_inputs: '請確認輸入資料是否完整。',
+        };
+        triggerError(errorMap[data.error] || '修改失敗。');
+      }
+    } catch {
+      triggerError('無法連線至伺服器。');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  // Delete Student Modal trigger and submit
+  const openDeleteModal = (student: StudentInfo) => {
+    if (student.totalDays > 0) {
+      alert(`無法刪除：該學生 (${student.name}) 目前有預約課程 (已預約天數 > 0)，請先取消其所有預約。`);
+      return;
+    }
+    setDeleteStudentId(student.id);
+    setDeleteStudentName(student.name);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteStudentSubmit = async () => {
+    setDeleteSubmitting(true);
+    try {
+      const token = localStorage.getItem('admin_session') || '';
+      const res = await fetch('/api/admin/students/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token,
+        },
+        body: JSON.stringify({
+          id: deleteStudentId,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerSuccess(`已成功刪除學生：${deleteStudentName}`);
+        setShowDeleteModal(false);
+        fetchAllData();
+      } else {
+        const errorMap: Record<string, string> = {
+          has_bookings: '預約限制：該學生目前有預約課程，無法刪除。',
+          student_not_found: '找不到該學生資料。',
+        };
+        triggerError(errorMap[data.error] || '刪除失敗。');
+      }
+    } catch {
+      triggerError('無法連線至伺服器。');
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  };
+
   if (!authorized) {
     return (
       <div className="app-container">
@@ -543,13 +653,35 @@ export default function AdminDashboard() {
                 {students.map((student) => {
                   const isExpanded = expandedStudents.includes(student.name);
                   return (
-                    <div key={student.name} className="student-roster-item">
+                    <div key={student.id || student.name} className="student-roster-item">
                       <div
                         className="student-roster-header"
                         onClick={() => toggleStudentExpanded(student.name)}
                       >
                         <div className="student-roster-info">
-                          <span className="student-roster-name">{student.name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span className="student-roster-name">{student.name}</span>
+                            <button
+                              className="dialog-btn confirm"
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', width: 'auto', margin: 0 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(student);
+                              }}
+                            >
+                              編輯
+                            </button>
+                            <button
+                              className="dialog-btn cancel"
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', width: 'auto', margin: 0, color: 'var(--accent-rose)', borderColor: 'var(--accent-rose)' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteModal(student);
+                              }}
+                            >
+                              刪除
+                            </button>
+                          </div>
                           <span className="student-roster-meta">
                             生日：{student.birthday} | 家長電話：{student.parentPhone}
                           </span>
@@ -723,6 +855,98 @@ export default function AdminDashboard() {
                 disabled={cancelSubmitting}
               >
                 {cancelSubmitting ? '處理中...' : '確定取消預約'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Modal */}
+      {showEditModal && (
+        <div className="dialog-overlay">
+          <div className="dialog-box" style={{ maxWidth: '450px', textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 1.25rem 0', color: 'var(--accent-indigo)' }}>
+              編輯學生資料
+            </h3>
+            <form onSubmit={handleEditStudentSubmit}>
+              <div className="modal-form-group">
+                <label>學生姓名</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  disabled={editSubmitting}
+                  required
+                />
+              </div>
+              <div className="modal-form-group">
+                <label>生日 (YYYYMMDD)</label>
+                <input
+                  type="text"
+                  value={editBirthday}
+                  onChange={(e) => setEditBirthday(e.target.value)}
+                  disabled={editSubmitting}
+                  maxLength={8}
+                  required
+                />
+              </div>
+              <div className="modal-form-group">
+                <label>家長電話</label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  disabled={editSubmitting}
+                  required
+                />
+              </div>
+              <div className="dialog-actions">
+                <button
+                  type="button"
+                  className="dialog-btn cancel"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={editSubmitting}
+                >
+                  取消
+                </button>
+                <button type="submit" className="dialog-btn confirm" disabled={editSubmitting}>
+                  {editSubmitting ? '儲存中...' : '確認修改'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Student Modal */}
+      {showDeleteModal && (
+        <div className="dialog-overlay">
+          <div className="dialog-box" style={{ maxWidth: '400px' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--accent-rose)' }}>確認刪除學生</h3>
+            <p style={{ fontSize: '0.95rem', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
+              您確定要刪除學生 <strong>{deleteStudentName}</strong> 嗎？
+              <br />
+              <span style={{ fontSize: '0.825rem', color: 'var(--accent-rose)', fontWeight: 'bold' }}>
+                此動作無法復原，將會清除其所有基本資料與註冊記錄。
+              </span>
+            </p>
+            <div className="dialog-actions">
+              <button
+                type="button"
+                className="dialog-btn cancel"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteSubmitting}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="dialog-btn confirm"
+                style={{ backgroundColor: 'var(--accent-rose)' }}
+                onClick={handleDeleteStudentSubmit}
+                disabled={deleteSubmitting}
+              >
+                {deleteSubmitting ? '刪除中...' : '確認刪除'}
               </button>
             </div>
           </div>

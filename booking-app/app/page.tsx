@@ -12,6 +12,7 @@ interface BookingSlot {
 }
 
 interface Student {
+  id?: string;
   name: string;
   birthday: string;
   parentPhone: string;
@@ -123,13 +124,8 @@ export default function Home() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const loggedInUser: Student = {
-          name: nameInput.trim(),
-          birthday: birthdayInput.trim(),
-          parentPhone: phoneInput.trim()
-        };
-        setStudent(loggedInUser);
-        localStorage.setItem('student_session', JSON.stringify(loggedInUser));
+        setStudent(data.user);
+        localStorage.setItem('student_session', JSON.stringify(data.user));
         setNameInput('');
         setBirthdayInput('');
         setPhoneInput('');
@@ -160,13 +156,8 @@ export default function Home() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const loggedInUser: Student = {
-          name: nameInput.trim(),
-          birthday: birthdayInput.trim(),
-          parentPhone: phoneInput.trim()
-        };
-        setStudent(loggedInUser);
-        localStorage.setItem('student_session', JSON.stringify(loggedInUser));
+        setStudent(data.user);
+        localStorage.setItem('student_session', JSON.stringify(data.user));
         setNameInput('');
         setBirthdayInput('');
         setPhoneInput('');
@@ -256,9 +247,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-name': encodeURIComponent(student.name),
-          'x-user-birthday': student.birthday,
-          'x-user-phone': student.parentPhone
+          'x-user-id': student.id || ''
         },
         body: JSON.stringify({
           dates: selectedDates,
@@ -288,9 +277,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-name': encodeURIComponent(student.name),
-          'x-user-birthday': student.birthday,
-          'x-user-phone': student.parentPhone
+          'x-user-id': student.id || ''
         },
         body: JSON.stringify({ date })
       });
@@ -381,16 +368,14 @@ export default function Home() {
 
   return (
     <div className="app-container">
-      <div className="dashboard-header">
-        <div>
-          <h1>Jeff老師暑期班預約系統</h1>
-          <div className="profile-stats">
-            <div className="stat-badge">
-              歡迎，<strong>{student.name}</strong>
-            </div>
-            <div className="stat-badge">
-              預約進度：<strong>{myBookingsCount} / 15 天</strong>
-            </div>
+      <div className="student-header">
+        <h1>Jeff老師暑期班預約系統</h1>
+        <div className="profile-stats">
+          <div className="stat-badge">
+            歡迎，<strong>{student.name}</strong>
+          </div>
+          <div className="stat-badge">
+            預約進度：<strong>{myBookingsCount} / 15 天</strong>
           </div>
         </div>
         <button className="logout-btn" onClick={handleLogout}>

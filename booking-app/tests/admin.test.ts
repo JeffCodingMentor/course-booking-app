@@ -3,6 +3,8 @@
  */
 import { GET as getStudents } from '../app/api/admin/students/route';
 import { POST as createStudent } from '../app/api/admin/students/create/route';
+import { POST as editStudent } from '../app/api/admin/students/edit/route';
+import { POST as deleteStudent } from '../app/api/admin/students/delete/route';
 import { POST as createAdminBooking } from '../app/api/admin/bookings/create/route';
 import { POST as cancelAdminBooking } from '../app/api/admin/bookings/cancel/route';
 import { POST as updateCapacity } from '../app/api/admin/capacity/route';
@@ -22,15 +24,11 @@ interface StudentInfo {
 describe('Admin Roster & Ledger API', () => {
   beforeEach(async () => {
     const db = getDB();
-    // Clear all test students and sets
-    await db.del('student:張三:20180815');
-    await db.del('student:李四:20180815');
-    await db.srem('registered_students', '張三');
-    await db.srem('registered_students', '李四');
-    await db.del('student_bookings:張三');
-    await db.del('student_bookings:李四');
-    await db.del('booking:2026-07-20');
-    await db.del('booking:2026-07-21');
+    // Clear all keys to ensure a clean database state
+    const allKeys = await db.keys('*');
+    for (const key of allKeys) {
+      await db.del(key);
+    }
   });
 
   it('should return 401 if unauthorized', async () => {
@@ -57,46 +55,49 @@ describe('Admin Roster & Ledger API', () => {
   it('should return students list with bookings and tuition summary', async () => {
     const db = getDB();
 
+    const studentIdZhang = 'std_zhang_id';
+    const studentIdLi = 'std_li_id';
+
     // Register 張三 and 李四
-    await db.set('student:張三:20180815', { name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+    await db.set(`student:${studentIdZhang}`, { id: studentIdZhang, name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+    await db.set(`student_lookup:張三:20180815`, studentIdZhang);
     await db.sadd('registered_students', '張三');
-    await db.set('student:李四:20180815', { name: '李四', birthday: '20180815', parentPhone: '0912345678' });
+
+    await db.set(`student:${studentIdLi}`, { id: studentIdLi, name: '李四', birthday: '20180815', parentPhone: '0912345678' });
+    await db.set(`student_lookup:李四:20180815`, studentIdLi);
     await db.sadd('registered_students', '李四');
 
     // Make booking for 張三 on 07-20 (single)
     await db.set('booking:2026-07-20', [
       {
-        studentName: '張三',
-        parentPhone: '0912345678',
+        studentId: studentIdZhang,
+        companionId: null,
         bookingType: 'single',
-        companionName: null,
         fee: 3000,
         bookedAt: new Date().toISOString(),
       },
     ]);
-    await db.sadd('student_bookings:張三', '2026-07-20');
+    await db.sadd(`student_bookings:${studentIdZhang}`, '2026-07-20');
 
     // Make companion booking for 張三 & 李四 on 07-21 (companion)
     await db.set('booking:2026-07-21', [
       {
-        studentName: '張三',
-        parentPhone: '0912345678',
+        studentId: studentIdZhang,
+        companionId: studentIdLi,
         bookingType: 'companion',
-        companionName: '李四',
         fee: 2700,
         bookedAt: new Date().toISOString(),
       },
       {
-        studentName: '李四',
-        parentPhone: '0912345678',
+        studentId: studentIdLi,
+        companionId: studentIdZhang,
         bookingType: 'companion',
-        companionName: '張三',
         fee: 2700,
         bookedAt: new Date().toISOString(),
       },
     ]);
-    await db.sadd('student_bookings:張三', '2026-07-21');
-    await db.sadd('student_bookings:李四', '2026-07-21');
+    await db.sadd(`student_bookings:${studentIdZhang}`, '2026-07-21');
+    await db.sadd(`student_bookings:${studentIdLi}`, '2026-07-21');
 
     const req = new Request('http://localhost/api/admin/students', {
       method: 'GET',
@@ -142,15 +143,24 @@ describe('Admin Roster & Ledger API', () => {
       expect(data.success).toBe(true);
 
       const db = getDB();
-      const profile = await db.get('student:王五:20180815');
+      const studentId = await db.get('student_lookup:王五:20180815');
+      expect(studentId).toBeDefined();
+
+      const profile = await db.get(`student:${studentId}`) as { name: string };
       expect(profile).toBeDefined();
+      expect(profile.name).toBe('王五');
       expect(await db.sismember('registered_students', '王五')).toBe(1);
     });
 
     it('should create manual booking via admin POST /api/admin/bookings/create', async () => {
       const db = getDB();
-      await db.set('student:張三:20180815', { name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      const studentId = 'std_zhang_id';
+      await db.set(`student:${studentId}`, { id: studentId, name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      await db.set('student_lookup:張三:20180815', studentId);
       await db.sadd('registered_students', '張三');
+
+      const fetchSpy = jest.spyOn(global, 'fetch');
+      fetchSpy.mockClear();
 
       const req = new Request('http://localhost/api/admin/bookings/create', {
         method: 'POST',
@@ -168,25 +178,35 @@ describe('Admin Roster & Ledger API', () => {
       expect(res.status).toBe(200);
       expect(data.success).toBe(true);
 
-      const bookings = await db.smembers('student_bookings:張三');
+      expect(fetchSpy.mock.calls.length).toBe(0);
+
+      const bookings = await db.smembers(`student_bookings:${studentId}`);
       expect(bookings).toContain('2026-07-20');
+      
+      const slots = await db.get('booking:2026-07-20') as { studentId: string }[];
+      expect(slots).toHaveLength(1);
+      expect(slots[0].studentId).toBe(studentId);
     });
 
     it('should cancel manual booking via admin POST /api/admin/bookings/cancel', async () => {
       const db = getDB();
-      await db.set('student:張三:20180815', { name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      const studentId = 'std_zhang_id';
+      await db.set(`student:${studentId}`, { id: studentId, name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      await db.set('student_lookup:張三:20180815', studentId);
       await db.sadd('registered_students', '張三');
       await db.set('booking:2026-07-20', [
         {
-          studentName: '張三',
-          parentPhone: '0912345678',
+          studentId: studentId,
+          companionId: null,
           bookingType: 'single',
-          companionName: null,
           fee: 3000,
           bookedAt: new Date().toISOString(),
         },
       ]);
-      await db.sadd('student_bookings:張三', '2026-07-20');
+      await db.sadd(`student_bookings:${studentId}`, '2026-07-20');
+
+      const fetchSpy = jest.spyOn(global, 'fetch');
+      fetchSpy.mockClear();
 
       const req = new Request('http://localhost/api/admin/bookings/cancel', {
         method: 'POST',
@@ -202,8 +222,86 @@ describe('Admin Roster & Ledger API', () => {
       expect(res.status).toBe(200);
       expect(data.success).toBe(true);
 
-      const bookings = await db.smembers('student_bookings:張三');
+      expect(fetchSpy.mock.calls.length).toBe(0);
+
+      const bookings = await db.smembers(`student_bookings:${studentId}`);
       expect(bookings).not.toContain('2026-07-20');
+      
+      const slots = await db.get('booking:2026-07-20');
+      expect(slots).toBeNull();
+    });
+
+    it('should edit student profile via admin POST /api/admin/students/edit', async () => {
+      const db = getDB();
+      const studentId = 'std_zhang_id';
+      await db.set(`student:${studentId}`, { id: studentId, name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      await db.set('student_lookup:張三:20180815', studentId);
+      await db.sadd('registered_students', '張三');
+
+      const req = new Request('http://localhost/api/admin/students/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': 'admin_token_validated' },
+        body: JSON.stringify({
+          id: studentId,
+          name: '張小明',
+          birthday: '20180816',
+          parentPhone: '0988888888',
+        }),
+      });
+
+      const res = await editStudent(req);
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.success).toBe(true);
+
+      expect(await db.get('student_lookup:張三:20180815')).toBeNull();
+      expect(await db.get('student_lookup:張小明:20180816')).toBe(studentId);
+
+      const profile = await db.get(`student:${studentId}`) as { name: string; birthday: string; parentPhone: string };
+      expect(profile.name).toBe('張小明');
+      expect(profile.birthday).toBe('20180816');
+      expect(profile.parentPhone).toBe('0988888888');
+
+      expect(await db.sismember('registered_students', '張三')).toBe(0);
+      expect(await db.sismember('registered_students', '張小明')).toBe(1);
+    });
+
+    it('should delete student profile via admin POST /api/admin/students/delete', async () => {
+      const db = getDB();
+      const studentId = 'std_zhang_id';
+      await db.set(`student:${studentId}`, { id: studentId, name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      await db.set('student_lookup:張三:20180815', studentId);
+      await db.sadd('registered_students', '張三');
+
+      await db.sadd(`student_bookings:${studentId}`, '2026-07-20');
+
+      const reqBlocked = new Request('http://localhost/api/admin/students/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': 'admin_token_validated' },
+        body: JSON.stringify({ id: studentId }),
+      });
+      const resBlocked = await deleteStudent(reqBlocked);
+      const dataBlocked = await resBlocked.json();
+      expect(resBlocked.status).toBe(400);
+      expect(dataBlocked.error).toBe('has_bookings');
+
+      expect(await db.get(`student:${studentId}`)).toBeDefined();
+
+      await db.del(`student_bookings:${studentId}`);
+
+      const reqSuccess = new Request('http://localhost/api/admin/students/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': 'admin_token_validated' },
+        body: JSON.stringify({ id: studentId }),
+      });
+      const resSuccess = await deleteStudent(reqSuccess);
+      const dataSuccess = await resSuccess.json();
+      expect(resSuccess.status).toBe(200);
+      expect(dataSuccess.success).toBe(true);
+
+      expect(await db.get(`student:${studentId}`)).toBeNull();
+      expect(await db.get('student_lookup:張三:20180815')).toBeNull();
+      expect(await db.sismember('registered_students', '張三')).toBe(0);
     });
   });
 

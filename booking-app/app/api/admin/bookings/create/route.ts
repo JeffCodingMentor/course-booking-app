@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
-import { sendLineNotification } from '@/lib/notify';
+
+interface StudentProfile {
+  id: string;
+  name: string;
+  birthday: string;
+  parentPhone: string;
+}
 
 export async function POST(request: Request) {
   try {
@@ -23,28 +29,27 @@ export async function POST(request: Request) {
 
     const db = getDB();
 
-    interface StudentProfile {
-      name: string;
-      birthday: string;
-      parentPhone: string;
-    }
+    // 4. Find the student profile to retrieve studentId
+    const allKeys = await db.keys('student:*');
+    const studentKeys = allKeys.filter(
+      (key) => key.startsWith('student:') && !key.startsWith('student_lookup:') && !key.startsWith('student_bookings:')
+    );
 
-    // 4. Find the student profile to retrieve parentPhone
-    const studentKeys = await db.keys('student:*');
-    let parentPhone = '';
+    let studentId = '';
     for (const key of studentKeys) {
       const profile = (await db.get(key)) as StudentProfile | null;
       if (profile && profile.name === studentName) {
-        parentPhone = profile.parentPhone;
+        studentId = profile.id;
         break;
       }
     }
 
-    if (!parentPhone) {
+    if (!studentId) {
       return NextResponse.json({ success: false, error: 'student_not_found' }, { status: 400 });
     }
 
     // Validate companion registration if companion mode is enabled
+    let companionId = '';
     if (isCompanionMode) {
       if (!companionName) {
         return NextResponse.json({ success: false, error: 'invalid_inputs' });
@@ -53,34 +58,44 @@ export async function POST(request: Request) {
       if (isCompanionRegistered !== 1) {
         return NextResponse.json({ success: false, error: 'companion_not_registered' });
       }
+
+      for (const key of studentKeys) {
+        const profile = (await db.get(key)) as StudentProfile | null;
+        if (profile && profile.name === companionName) {
+          companionId = profile.id;
+          break;
+        }
+      }
+
+      if (!companionId) {
+        return NextResponse.json({ success: false, error: 'companion_not_registered' });
+      }
     }
 
     // 5. Booking Limit Check (Max 15 bookings total)
-    const mainBookingsCount = await db.scard(`student_bookings:${studentName}`);
+    const mainBookingsCount = await db.scard(`student_bookings:${studentId}`);
     if (mainBookingsCount + dates.length > 15) {
       return NextResponse.json({ success: false, error: 'booking_limit_exceeded' });
     }
 
-    if (isCompanionMode && companionName) {
-      const companionBookingsCount = await db.scard(`student_bookings:${companionName}`);
+    if (isCompanionMode && companionId) {
+      const companionBookingsCount = await db.scard(`student_bookings:${companionId}`);
       if (companionBookingsCount + dates.length > 15) {
         return NextResponse.json({ success: false, error: 'booking_limit_exceeded' });
       }
     }
 
-
-
     // 7. Overlap Check & Capacity Check for all dates before modifying state
     for (const date of dates) {
       // Overlap Check for Main Student
-      const isMainAlreadyBooked = await db.sismember(`student_bookings:${studentName}`, date);
+      const isMainAlreadyBooked = await db.sismember(`student_bookings:${studentId}`, date);
       if (isMainAlreadyBooked === 1) {
         return NextResponse.json({ success: false, error: 'already_booked' });
       }
 
       // Overlap Check for Companion
-      if (isCompanionMode && companionName) {
-        const isCompanionAlreadyBooked = await db.sismember(`student_bookings:${companionName}`, date);
+      if (isCompanionMode && companionId) {
+        const isCompanionAlreadyBooked = await db.sismember(`student_bookings:${companionId}`, date);
         if (isCompanionAlreadyBooked === 1) {
           return NextResponse.json({ success: false, error: 'companion_already_booked' });
         }
@@ -110,22 +125,20 @@ export async function POST(request: Request) {
       const slots = Array.isArray(rawSlots) ? rawSlots : [];
 
       const mainSlot = {
-        studentName,
-        parentPhone,
+        studentId,
+        companionId: isCompanionMode ? companionId : null,
         bookingType: isCompanionMode ? 'companion' : 'single',
-        companionName: isCompanionMode ? companionName : null,
         fee,
         bookedAt,
       };
 
       const newSlots = [...slots, mainSlot];
 
-      if (isCompanionMode && companionName) {
+      if (isCompanionMode && companionId) {
         const companionSlot = {
-          studentName: companionName,
-          parentPhone,
+          studentId: companionId,
+          companionId: studentId,
           bookingType: 'companion',
-          companionName: studentName,
           fee,
           bookedAt,
         };
@@ -135,13 +148,14 @@ export async function POST(request: Request) {
       await db.set(`booking:${date}`, newSlots);
 
       // Update student bookings sets
-      await db.sadd(`student_bookings:${studentName}`, date);
-      if (isCompanionMode && companionName) {
-        await db.sadd(`student_bookings:${companionName}`, date);
+      await db.sadd(`student_bookings:${studentId}`, date);
+      if (isCompanionMode && companionId) {
+        await db.sadd(`student_bookings:${companionId}`, date);
       }
     }
 
-    // 9. Trigger LINE Notification (formatted as MM/DD)
+    // 9. Bypass LINE notification per requirement
+    /*
     const formattedDates = dates.map((d) => {
       const parts = d.split('-');
       return `${parts[1]}/${parts[2]}`;
@@ -154,9 +168,11 @@ export async function POST(request: Request) {
       dates: formattedDates,
       parentPhone,
     });
+    */
 
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ success: false, error: 'server_error' }, { status: 500 });
   }
 }
+
