@@ -12,7 +12,7 @@ const WEEKS_DATA = [
   ['2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27', '2026-08-28']
 ];
 
-const PYTHON_WEEK = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'];
+
 
 interface BookingSlot {
   studentName: string;
@@ -272,7 +272,6 @@ export default function AdminDashboard() {
           companion_already_booked: '同行者已於此日期預約過。',
           booking_limit_exceeded: '學生的預約總天數已達上限(15天)。',
           companion_not_registered: '同行者尚未註冊。',
-          date_reserved_for_python: '此日期保留給 Python 程式體驗週。',
         };
         triggerError(errorMap[data.error] || '預約失敗，請重試。');
       }
@@ -400,13 +399,12 @@ export default function AdminDashboard() {
                 const dateParts = dateStr.split('-');
                 const displayDate = `${dateParts[1]}/${dateParts[2]}`;
                 const slots = bookingData[dateStr] || [];
-                const capacity = capacityData[dateStr] ?? 2;
-                const isPython = PYTHON_WEEK.includes(dateStr);
+                const defaultCapacity = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'].includes(dateStr) ? 0 : 2;
+                const capacity = capacityData[dateStr] ?? defaultCapacity;
                 const isLocked = capacity === 0;
 
                 let cellBgClass = '';
-                if (isPython) cellBgClass = ' python-week';
-                else if (isLocked) cellBgClass = ' locked';
+                if (isLocked) cellBgClass = ' locked';
 
                 return (
                   <div key={dayIdx} className={`date-cell-admin${cellBgClass}`}>
@@ -419,13 +417,9 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <div className="date-cell-admin-capacity">
-                        {isPython ? (
-                          <span className="capacity-badge locked">Python週</span>
-                        ) : (
-                          <span className={`capacity-badge ${isLocked ? 'locked' : capacity > 2 ? 'increased' : ''}`}>
-                            {isLocked ? '已鎖定' : `${slots.length}/${capacity}`}
-                          </span>
-                        )}
+                        <span className={`capacity-badge ${isLocked ? 'locked' : capacity > 2 ? 'increased' : ''}`}>
+                          {isLocked ? '已鎖定' : `${slots.length}/${capacity}`}
+                        </span>
                       </div>
                     </div>
 
@@ -451,7 +445,7 @@ export default function AdminDashboard() {
                       })}
 
                       {/* Manual Add Button */}
-                      {!isPython && slots.length < capacity && (
+                      {slots.length < capacity && (
                         <button
                           className="add-booking-btn-cell"
                           onClick={() => openManualBooking(dateStr)}
@@ -461,8 +455,8 @@ export default function AdminDashboard() {
                       )}
                     </div>
 
-                    {/* Capacity setters (only for non-python experience weeks) */}
-                    {!isPython && (
+                    {/* Capacity setters */}
+                    {
                       <div className="capacity-setter-inline">
                         <label>容量: </label>
                         <button
@@ -481,7 +475,7 @@ export default function AdminDashboard() {
                           +
                         </button>
                       </div>
-                    )}
+                    }
                   </div>
                 );
               })}

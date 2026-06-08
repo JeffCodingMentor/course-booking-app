@@ -26,7 +26,7 @@ const WEEKS_DATA = [
   ['2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27', '2026-08-28']
 ];
 
-const PYTHON_WEEK = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'];
+
 
 export default function Home() {
   const [student, setStudent] = useState<Student | null>(null);
@@ -469,7 +469,6 @@ export default function Home() {
               const displayDate = `${dateParts[1]}/${dateParts[2]}`;
               const weekdays = ['週一', '週二', '週三', '週四', '週五'];
               const weekdayName = weekdays[dayIdx];
-              const isPython = PYTHON_WEEK.includes(dateStr);
               const slots = bookingData[dateStr] || [];
               const myBooking = slots.find((s) => s.studentName === student.name);
 
@@ -480,14 +479,12 @@ export default function Home() {
               const isSelected = selectedDates.includes(dateStr);
 
               // Calculate slots details
-              const capacity = capacityData[dateStr] ?? 2;
+              const defaultCapacity = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'].includes(dateStr) ? 0 : 2;
+              const capacity = capacityData[dateStr] ?? defaultCapacity;
               const remaining = capacity - slots.length;
-              const isSelectable = !isPython && !myBooking && capacity > 0 && (isCompanionMode ? (isCompanionVerified && remaining >= 2) : (remaining >= 1));
+              const isSelectable = !myBooking && capacity > 0 && (isCompanionMode ? (isCompanionVerified && remaining >= 2) : (remaining >= 1));
 
-              if (isPython) {
-                cellClass += ' python-reserved';
-                slotText = '額滿';
-              } else if (myBooking) {
+              if (myBooking) {
                 cellClass += ' my-booking';
                 const companionText =
                   myBooking.bookingType === 'companion' && myBooking.companionName
@@ -534,7 +531,6 @@ export default function Home() {
                   className={cellClass}
                   style={{ cursor: isSelectable ? 'pointer' : 'default' }}
                   onClick={handleCellClick}
-                  data-tooltip={isPython ? 'Python' : undefined}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="date-number">

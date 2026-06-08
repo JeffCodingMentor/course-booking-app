@@ -19,13 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
     }
 
-    // 1. Python Class Week restriction (08/03 ~ 08/07)
-    const pythonWeek = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'];
-    for (const date of dates) {
-      if (pythonWeek.includes(date)) {
-        return NextResponse.json({ success: false, error: 'date_reserved_for_python' });
-      }
-    }
+
 
     // Ensure all dates in the request are unique to avoid self-overlap
     if (new Set(dates).size !== dates.length) {
@@ -80,7 +74,8 @@ export async function POST(request: Request) {
       const neededSlots = isCompanionMode ? 2 : 1;
 
       const capacityVal = await db.get(`capacity:${date}`);
-      const capacity = typeof capacityVal === 'number' ? capacityVal : 2;
+      const defaultCapacity = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'].includes(date) ? 0 : 2;
+      const capacity = typeof capacityVal === 'number' ? capacityVal : defaultCapacity;
 
       if (slots.length + neededSlots > capacity) {
         return NextResponse.json({ success: false, error: 'insufficient_slots' });

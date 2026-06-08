@@ -48,7 +48,7 @@ describe('Booking API Endpoints', () => {
     };
   };
 
-  it('should reject booking requests during Python Class week (08/03 ~ 08/07)', async () => {
+  it('should reject booking requests on locked dates (default capacity 0 for 3rd week)', async () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
       headers: createHeaders(mockUser),
@@ -57,7 +57,7 @@ describe('Booking API Endpoints', () => {
     const res = await createBooking(req);
     const data = await res.json();
     expect(data.success).toBe(false);
-    expect(data.error).toBe('date_reserved_for_python');
+    expect(data.error).toBe('insufficient_slots');
   });
 
   it('should prevent booking if student exceeds 15 bookings limit', async () => {

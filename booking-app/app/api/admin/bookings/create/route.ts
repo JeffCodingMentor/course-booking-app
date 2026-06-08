@@ -73,13 +73,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 6. Python Class Week restriction (08/03 ~ 08/07)
-    const pythonWeek = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'];
-    for (const date of dates) {
-      if (pythonWeek.includes(date)) {
-        return NextResponse.json({ success: false, error: 'date_reserved_for_python' });
-      }
-    }
+
 
     // 7. Overlap Check & Capacity Check for all dates before modifying state
     for (const date of dates) {
@@ -102,9 +96,10 @@ export async function POST(request: Request) {
       const slots = Array.isArray(rawSlots) ? rawSlots : [];
       const neededSlots = isCompanionMode ? 2 : 1;
 
-      // Query custom capacity override or default to 2
+      // Query custom capacity override or default to 2 (0 for 3rd week dates)
       const capacityVal = await db.get(`capacity:${date}`);
-      const capacity = typeof capacityVal === 'number' ? capacityVal : 2;
+      const defaultCapacity = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'].includes(date) ? 0 : 2;
+      const capacity = typeof capacityVal === 'number' ? capacityVal : defaultCapacity;
 
       if (slots.length + neededSlots > capacity) {
         return NextResponse.json({ success: false, error: 'insufficient_slots' });
