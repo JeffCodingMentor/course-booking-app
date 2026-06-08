@@ -1,6 +1,6 @@
 # Jeff老師暑期班預約系統 (Course Booking App)
 
-本專案是一個基於 **Next.js (App Router)** 的課程預約與註冊系統，後端採用 **Vercel KV (Redis)** 進行資料儲存，並串接 **ChatEverywhere LINE Notify** 發送即時預約通知。
+本專案是一個基於 **Next.js (App Router)** 的課程預約與註冊系統，後端採用 **Vercel KV (Redis) / Upstash** 進行資料儲存，並串接 **ChatEverywhere LINE Notify** 發送即時預約通知。
 
 ## 🌟 系統特色
 
@@ -9,7 +9,7 @@
    * 若系統無此學生資料，將自動跳出彈出視窗詢問並協助引導註冊。
 2. **六週平日日曆 (2026/07/20 ~ 2026/08/28)**：
    * 僅顯示週一至週五（共 30 天）。
-   * 顯示剩餘容量：「空位 2」或「空位 1」。
+   * 顯示剩餘容量：「空位 2」或「空位 1」等，依管理端設定之每日容量而定。
    * 已額滿的日期顯示紅色的「額滿」。
    * 目前登入學生已預約的日期顯示「上課」，並附有「取消」按鈕（點擊會觸建自訂彈出視窗進行再次確認，確認取消後會自動發送 LINE 取消通知）。
 3. **價格隱藏與兩人同行功能**：
@@ -17,14 +17,25 @@
    * 學生學費為每堂 3000 元，兩人同行享九折優惠（每人每堂 2700 元，寫入資料庫與發送 LINE 通知）。
    * 支援「兩人同行」核取方塊，可輸入同行者姓名進行即時驗證（驗證成功顯示「已確認」）。**兩人同行姓名未驗證確認前，限制無法點選日曆格開始進行預約。**
    * 兩人同行會自動連動預約/取消雙方的上課名額。
-4. **Python 專屬保留週**：
-   * 2026/08/03 ~ 2026/08/07 鎖定為「額滿」，滑鼠懸停時會顯示「Python」提示工具。
+4. **動態容量控制與預約鎖定**：
+   * 支援每日預約名額覆寫設定。第三週（2026/08/03 ~ 2026/08/07）預設容量為 0（即為鎖定/額滿狀態，可由老師於後台手動加減容量解鎖）。
 5. **多選批次預約**：
    * 家長可點選多個可預約的日期（以橘黃色醒目顯示），點擊「確認預約」後一次性送出。
    * 預約成功後顯示「預約成功，等待老師電話聯繫確認」自訂彈出提示。
 6. **響應式設計 (RWD)**：
    * 支援手機與平板觸控操作。
    * 當螢幕寬度小於 600px 時，自動切換為垂直單欄的每日清單模式，並於週與週之間繪製分隔線，日期旁會顯示 `(週一)` ~ `(週五)` 等標籤。
+
+---
+
+## 👑 老師管理者後台系統 (`/admin`)
+
+本系統提供專屬的管理者後台，方便 Jeff 老師即時查看對帳單與管理名額：
+* **安全登入與防護**：進入 `/admin` 輸入密碼登入，後端由安全 Token 管理 Session。在生產環境下 API 與除錯端點均有 403 安全防護。
+* **預約日曆管理 (Calendar)**：顯示 6 週平日預約名冊，支援點擊 `+ 新增` 進行手動新增預約（支援單人/同行），可直接在月曆格中加減調整容量（`+` / `-`）進行動態額滿與鎖定。
+* **學生名冊與對帳單 (Roster & Ledger)**：
+  * **手動新增學生**：姓名、生日、電話。
+  * **帳單與明細**：點擊學生卡片可展開查看該學生的所有預約日期、課程類型（單人 $3000 / 同行 $2700）、個別堂費用明細及學費總計金額。
 
 ---
 
@@ -37,15 +48,22 @@ npm install
 ```
 
 ### 2. 環境變數設定 (`.env.local`)
-在本機進行開發或測試 LINE 通知時，請在 `booking-app/` 目錄下建立 `.env.local` 檔案並填入金鑰：
+請在 `booking-app/` 目錄下建立 `.env.local` 檔案並填入金鑰：
 
 ```env
 # ChatEverywhere LINE Notify Token
-CHAT_EVERYWHERE_TOKEN="bn6PqK5qffcvjsGWbxczUDS6CvVFY43a"
+CHAT_EVERYWHERE_TOKEN="your_line_token"
 
-# Vercel KV (本機不填此二變數時，會自動使用 MemoryDB 進行本機測試，重啟伺服器會重設資料)
+# 管理者後台密碼 (本機測試可用 test_admin_pass)
+ADMIN_PASSWORD="test_admin_pass"
+
+# Vercel KV / Upstash Redis
+# (本機不填以下變數時，會自動使用 MemoryDB 進行本機測試，重啟伺服器會重設資料)
+# 支援以下任一組變數，Vercel 串接 Upstash 後會自動偵測並切換
 # KV_REST_API_URL="your_vercel_kv_rest_url"
 # KV_REST_API_TOKEN="your_vercel_kv_rest_token"
+# UPSTASH_REDIS_REST_URL="your_upstash_redis_rest_url"
+# UPSTASH_REDIS_REST_TOKEN="your_upstash_redis_rest_token"
 ```
 
 ---
@@ -56,10 +74,12 @@ CHAT_EVERYWHERE_TOKEN="bn6PqK5qffcvjsGWbxczUDS6CvVFY43a"
 ```bash
 npm run dev
 ```
-啟動後可在瀏覽器打開 `http://localhost:3000` 進行操作。
+啟動後可在瀏覽器打開進行操作：
+* 學生預約系統：`http://localhost:3000`
+* 老師管理者後台：`http://localhost:3000/admin` (本機預設密碼為 `test_admin_pass`)
 
 ### 執行測試套件
-我們編寫了完整的 Jest 測試套件，涵蓋資料庫、認證、預約限制與 LINE 通知：
+我們編寫了完整的 Jest 測試套件，涵蓋資料庫、認證、預約限制、後台對帳與 LINE 通知：
 ```bash
 npm run test
 ```
@@ -82,3 +102,4 @@ npm run build
 
 該網址會以 JSON 格式序列化並印出目前本機資料庫記憶體內的 `store` 與 `sets` 狀態。
 *注意：此網址僅限非生產環境（Development）執行，在生產環境中將自動回傳 403 Forbidden 錯誤。*
+
