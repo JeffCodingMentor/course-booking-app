@@ -215,11 +215,30 @@ describe('Admin Roster & Ledger API', () => {
       await db.del('student_bookings:張三');
       await db.del('student_bookings:李四');
       await db.del('student_bookings:王五');
-      await db.set('student:張三:20180815', { name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      await db.del('student_bookings:std_zhang');
+      await db.del('student_bookings:std_li');
+      await db.del('student_bookings:std_wang');
+
+      // Clear student profiles and lookups
+      await db.del('student:std_zhang');
+      await db.del('student:std_li');
+      await db.del('student:std_wang');
+      await db.del('student_lookup:張三:20180815');
+      await db.del('student_lookup:李四:20180815');
+      await db.del('student_lookup:王五:20180815');
+
+      // Set up mock student profiles
+      await db.set('student:std_zhang', { id: 'std_zhang', name: '張三', birthday: '20180815', parentPhone: '0912345678' });
+      await db.set('student:std_li', { id: 'std_li', name: '李四', birthday: '20180815', parentPhone: '0912345678' });
+      await db.set('student:std_wang', { id: 'std_wang', name: '王五', birthday: '20180815', parentPhone: '0933333333' });
+
+      // Set up lookups
+      await db.set('student_lookup:張三:20180815', 'std_zhang');
+      await db.set('student_lookup:李四:20180815', 'std_li');
+      await db.set('student_lookup:王五:20180815', 'std_wang');
+
       await db.sadd('registered_students', '張三');
-      await db.set('student:李四:20180815', { name: '李四', birthday: '20180815', parentPhone: '0912345678' });
       await db.sadd('registered_students', '李四');
-      await db.set('student:王五:20180815', { name: '王五', birthday: '20180815', parentPhone: '0933333333' });
       await db.sadd('registered_students', '王五');
     });
 
@@ -255,7 +274,7 @@ describe('Admin Roster & Ledger API', () => {
       await db.set('capacity:2026-07-20', 1);
 
       // 2. Book student 1 (張三) -> should succeed
-      const headers1 = { 'x-user-name': encodeURIComponent('張三'), 'x-user-birthday': '20180815', 'x-user-phone': '0912345678' };
+      const headers1 = { 'x-user-id': 'std_zhang' };
       const req1 = new Request('http://localhost/api/booking/create', {
         method: 'POST',
         headers: headers1,
@@ -267,7 +286,7 @@ describe('Admin Roster & Ledger API', () => {
       expect(data1.success).toBe(true);
 
       // 3. Book student 2 (李四) -> should fail due to insufficient_slots
-      const headers2 = { 'x-user-name': encodeURIComponent('李四'), 'x-user-birthday': '20180815', 'x-user-phone': '0912345678' };
+      const headers2 = { 'x-user-id': 'std_li' };
       const req2 = new Request('http://localhost/api/booking/create', {
         method: 'POST',
         headers: headers2,
@@ -285,7 +304,7 @@ describe('Admin Roster & Ledger API', () => {
       await db.set('capacity:2026-07-20', 0);
 
       // 2. Book student 1 (張三) -> should fail
-      const headers1 = { 'x-user-name': encodeURIComponent('張三'), 'x-user-birthday': '20180815', 'x-user-phone': '0912345678' };
+      const headers1 = { 'x-user-id': 'std_zhang' };
       const req1 = new Request('http://localhost/api/booking/create', {
         method: 'POST',
         headers: headers1,

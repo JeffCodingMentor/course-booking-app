@@ -2,16 +2,28 @@ import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { sendLineNotification } from '@/lib/notify';
 
+interface StudentProfile {
+  id: string;
+  name: string;
+  birthday: string;
+  parentPhone: string;
+}
+
 export async function POST(request: Request) {
   try {
-    const rawName = request.headers.get('x-user-name');
-    const mainStudentName = rawName ? decodeURIComponent(rawName) : null;
-    const mainStudentBirthday = request.headers.get('x-user-birthday');
-    const mainParentPhone = request.headers.get('x-user-phone');
-
-    if (!mainStudentName || !mainStudentBirthday || !mainParentPhone) {
+    const studentId = request.headers.get('x-user-id');
+    if (!studentId) {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
+
+    const db = getDB();
+    const mainStudentProfile = (await db.get(`student:${studentId}`)) as StudentProfile | null;
+    if (!mainStudentProfile) {
+      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+    }
+
+    const mainStudentName = mainStudentProfile.name;
+    const mainParentPhone = mainStudentProfile.parentPhone;
 
     const { dates, isCompanionMode, companionName } = await request.json();
 
@@ -19,16 +31,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
     }
 
-
-
     // Ensure all dates in the request are unique to avoid self-overlap
     if (new Set(dates).size !== dates.length) {
       return NextResponse.json({ success: false, error: 'already_booked' });
     }
 
-    const db = getDB();
-
     // 2. Validate companion registration if companion mode is enabled
+    let companionId: string | null = null;
     if (isCompanionMode) {
       if (!companionName) {
         return NextResponse.json({ success: false, error: 'invalid_inputs' });
@@ -37,16 +46,30 @@ export async function POST(request: Request) {
       if (isCompanionRegistered !== 1) {
         return NextResponse.json({ success: false, error: 'companion_not_registered' });
       }
+
+      // Search student:* keys to find companionId
+      const studentKeys = await db.keys('student:*');
+      for (const key of studentKeys) {
+        const profile = (await db.get(key)) as StudentProfile | null;
+        if (profile && profile.name === companionName) {
+          companionId = profile.id;
+          break;
+        }
+      }
+
+      if (!companionId) {
+        return NextResponse.json({ success: false, error: 'companion_not_registered' });
+      }
     }
 
     // 3. Booking Limit Check (Max 15 bookings total)
-    const mainBookingsCount = await db.scard(`student_bookings:${mainStudentName}`);
+    const mainBookingsCount = await db.scard(`student_bookings:${studentId}`);
     if (mainBookingsCount + dates.length > 15) {
       return NextResponse.json({ success: false, error: 'booking_limit_exceeded' });
     }
 
-    if (isCompanionMode && companionName) {
-      const companionBookingsCount = await db.scard(`student_bookings:${companionName}`);
+    if (isCompanionMode && companionId) {
+      const companionBookingsCount = await db.scard(`student_bookings:${companionId}`);
       if (companionBookingsCount + dates.length > 15) {
         return NextResponse.json({ success: false, error: 'booking_limit_exceeded' });
       }
@@ -55,14 +78,14 @@ export async function POST(request: Request) {
     // 4. Overlap Check & Capacity Check for all dates before modifying state
     for (const date of dates) {
       // Overlap Check for Main Student
-      const isMainAlreadyBooked = await db.sismember(`student_bookings:${mainStudentName}`, date);
+      const isMainAlreadyBooked = await db.sismember(`student_bookings:${studentId}`, date);
       if (isMainAlreadyBooked === 1) {
         return NextResponse.json({ success: false, error: 'already_booked' });
       }
 
       // Overlap Check for Companion
-      if (isCompanionMode && companionName) {
-        const isCompanionAlreadyBooked = await db.sismember(`student_bookings:${companionName}`, date);
+      if (isCompanionMode && companionId) {
+        const isCompanionAlreadyBooked = await db.sismember(`student_bookings:${companionId}`, date);
         if (isCompanionAlreadyBooked === 1) {
           return NextResponse.json({ success: false, error: 'companion_already_booked' });
         }
@@ -91,22 +114,20 @@ export async function POST(request: Request) {
       const slots = Array.isArray(rawSlots) ? rawSlots : [];
 
       const mainSlot = {
-        studentName: mainStudentName,
-        parentPhone: mainParentPhone,
+        studentId,
+        companionId: isCompanionMode ? companionId : null,
         bookingType: isCompanionMode ? 'companion' : 'single',
-        companionName: isCompanionMode ? companionName : null,
         fee,
         bookedAt
       };
 
       const newSlots = [...slots, mainSlot];
 
-      if (isCompanionMode && companionName) {
+      if (isCompanionMode && companionId) {
         const companionSlot = {
-          studentName: companionName,
-          parentPhone: mainParentPhone,
+          studentId: companionId,
+          companionId: studentId,
           bookingType: 'companion',
-          companionName: mainStudentName,
           fee,
           bookedAt
         };
@@ -116,9 +137,9 @@ export async function POST(request: Request) {
       await db.set(`booking:${date}`, newSlots);
 
       // Update student bookings sets
-      await db.sadd(`student_bookings:${mainStudentName}`, date);
-      if (isCompanionMode && companionName) {
-        await db.sadd(`student_bookings:${companionName}`, date);
+      await db.sadd(`student_bookings:${studentId}`, date);
+      if (isCompanionMode && companionId) {
+        await db.sadd(`student_bookings:${companionId}`, date);
       }
     }
 

@@ -19,13 +19,43 @@ describe('Booking API Endpoints', () => {
 
   beforeEach(async () => {
     const db = getDB();
-    // Setup mock data
+    
+    // Clear student profiles and lookups
+    await db.del('student:std_zhang');
+    await db.del('student:std_li');
+    await db.del('student_lookup:張三:20180815');
+    await db.del('student_lookup:李四:20180815');
+
+    // Set up mock student profiles
+    await db.set('student:std_zhang', {
+      id: 'std_zhang',
+      name: '張三',
+      birthday: '20180815',
+      parentPhone: '0912345678'
+    });
+    await db.set('student:std_li', {
+      id: 'std_li',
+      name: '李四',
+      birthday: '20180815',
+      parentPhone: '0912345678'
+    });
+
+    // Set up lookups
+    await db.set('student_lookup:張三:20180815', 'std_zhang');
+    await db.set('student_lookup:李四:20180815', 'std_li');
+
+    // Clear booking / student booking sets
     await db.del('booking:2026-07-20');
     await db.del('booking:2026-08-03'); // Python week Monday
     await db.del('student_bookings:張三');
     await db.del('student_bookings:李四');
+    await db.del('student_bookings:std_zhang');
+    await db.del('student_bookings:std_li');
+    
+    // Set up registered students set
     await db.sadd('registered_students', '張三');
     await db.sadd('registered_students', '李四');
+
     process.env.CHAT_EVERYWHERE_TOKEN = 'mock_token';
     // Spy on fetch to avoid hitting real endpoint
     jest.spyOn(global, 'fetch').mockImplementation(() =>
@@ -40,18 +70,18 @@ describe('Booking API Endpoints', () => {
     jest.restoreAllMocks();
   });
 
-  const createHeaders = (user: typeof mockUser) => {
+  const createHeaders = async (user: typeof mockUser) => {
+    const db = getDB();
+    const studentId = await db.get(`student_lookup:${user.name}:${user.birthday}`);
     return {
-      'x-user-name': encodeURIComponent(user.name),
-      'x-user-birthday': user.birthday,
-      'x-user-phone': user.parentPhone
+      'x-user-id': String(studentId || '')
     };
   };
 
   it('should reject booking requests on locked dates (default capacity 0 for 3rd week)', async () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
-      headers: createHeaders(mockUser),
+      headers: await createHeaders(mockUser),
       body: JSON.stringify({ dates: ['2026-08-03'], isCompanionMode: false, companionName: null })
     });
     const res = await createBooking(req);
@@ -64,12 +94,12 @@ describe('Booking API Endpoints', () => {
     const db = getDB();
     // Pre-fill 15 bookings
     for (let i = 1; i <= 15; i++) {
-      await db.sadd('student_bookings:張三', `2026-07-${i + 10}`);
+      await db.sadd('student_bookings:std_zhang', `2026-07-${i + 10}`);
     }
 
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
-      headers: createHeaders(mockUser),
+      headers: await createHeaders(mockUser),
       body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: false, companionName: null })
     });
     const res = await createBooking(req);
@@ -81,7 +111,7 @@ describe('Booking API Endpoints', () => {
   it('should allow valid single booking and subtract 1 slot', async () => {
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
-      headers: createHeaders(mockUser),
+      headers: await createHeaders(mockUser),
       body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: false, companionName: null })
     });
     const res = await createBooking(req);
@@ -98,13 +128,19 @@ describe('Booking API Endpoints', () => {
   it('should fail companion booking if date only has 1 slot left', async () => {
     const db = getDB();
     // Fill 1 slot already
+    await db.set('student:std_wang', {
+      id: 'std_wang',
+      name: '王五',
+      birthday: '20180815',
+      parentPhone: '0933333333'
+    });
     await db.set('booking:2026-07-20', [{
-      studentName: '王五', parentPhone: '0933333333', bookingType: 'single', companionName: null, fee: 3000, bookedAt: new Date().toISOString()
+      studentId: 'std_wang', companionId: null, bookingType: 'single', fee: 3000, bookedAt: new Date().toISOString()
     }]);
 
     const req = new Request('http://localhost/api/booking/create', {
       method: 'POST',
-      headers: createHeaders(mockUser),
+      headers: await createHeaders(mockUser),
       body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: true, companionName: '李四' })
     });
     const res = await createBooking(req);
@@ -117,7 +153,7 @@ describe('Booking API Endpoints', () => {
     // 1. Create companion booking
     const createReq = new Request('http://localhost/api/booking/create', {
       method: 'POST',
-      headers: createHeaders(mockUser),
+      headers: await createHeaders(mockUser),
       body: JSON.stringify({ dates: ['2026-07-20'], isCompanionMode: true, companionName: '李四' })
     });
     await createBooking(createReq);
@@ -130,7 +166,7 @@ describe('Booking API Endpoints', () => {
     // 2. Cancel booking
     const cancelReq = new Request('http://localhost/api/booking/cancel', {
       method: 'POST',
-      headers: createHeaders(mockUser),
+      headers: await createHeaders(mockUser),
       body: JSON.stringify({ date: '2026-07-20' })
     });
     const cancelRes = await cancelBooking(cancelReq);
