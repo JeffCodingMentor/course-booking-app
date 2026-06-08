@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 
 class MemoryDB {
   private store: Map<string, string> = new Map();
@@ -90,10 +90,18 @@ class MemoryDB {
 
 const mockDbInstance = new MemoryDB();
 
+let kvClientInstance: ReturnType<typeof createClient> | null = null;
+
 export function getDB() {
-  // If running in Vercel production with KV variables set, use @vercel/kv
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    return kv;
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  // If running in Vercel production with KV/Upstash variables set, use the client
+  if (url && token) {
+    if (!kvClientInstance) {
+      kvClientInstance = createClient({ url, token });
+    }
+    return kvClientInstance;
   }
   // Otherwise return our mock in-memory database for offline tests
   return mockDbInstance;
