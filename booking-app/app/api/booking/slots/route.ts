@@ -10,8 +10,10 @@ export async function GET(request: Request) {
     }
     const db = getDB();
     const slots = await db.get(`booking:${date}`) || [];
-    return NextResponse.json({ slots });
+    const capacityVal = await db.get(`capacity:${date}`);
+    const capacity = typeof capacityVal === 'number' ? capacityVal : 2;
+    return NextResponse.json({ slots, capacity });
   } catch {
-    return NextResponse.json({ slots: [] });
+    return NextResponse.json({ slots: [], capacity: 2 });
   }
 }

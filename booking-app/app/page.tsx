@@ -52,10 +52,13 @@ export default function Home() {
 
   // Bookings map for all calendar dates
   const [bookingData, setBookingData] = useState<Record<string, BookingSlot[]>>({});
+  // Custom capacity overrides map
+  const [capacityData, setCapacityData] = useState<Record<string, number>>({});
 
   const fetchAllBookings = useCallback(async () => {
     const allDates = WEEKS_DATA.flat();
     const data: Record<string, BookingSlot[]> = {};
+    const capacities: Record<string, number> = {};
     await Promise.all(
       allDates.map(async (date) => {
         try {
@@ -63,15 +66,19 @@ export default function Home() {
           if (res.ok) {
             const json = await res.json();
             data[date] = json.slots || [];
+            capacities[date] = typeof json.capacity === 'number' ? json.capacity : 2;
           } else {
             data[date] = [];
+            capacities[date] = 2;
           }
         } catch {
           data[date] = [];
+          capacities[date] = 2;
         }
       })
     );
     setBookingData(data);
+    setCapacityData(capacities);
   }, []);
 
   useEffect(() => {
@@ -473,8 +480,9 @@ export default function Home() {
               const isSelected = selectedDates.includes(dateStr);
 
               // Calculate slots details
-              const remaining = 2 - slots.length;
-              const isSelectable = !isPython && !myBooking && (isCompanionMode ? (isCompanionVerified && remaining === 2) : (remaining >= 1));
+              const capacity = capacityData[dateStr] ?? 2;
+              const remaining = capacity - slots.length;
+              const isSelectable = !isPython && !myBooking && capacity > 0 && (isCompanionMode ? (isCompanionVerified && remaining >= 2) : (remaining >= 1));
 
               if (isPython) {
                 cellClass += ' python-reserved';
@@ -498,13 +506,13 @@ export default function Home() {
                     取消
                   </button>
                 );
-              } else if (slots.length >= 2) {
+              } else if (capacity === 0 || slots.length >= capacity) {
                 cellClass += ' fully-booked';
                 slotText = '額滿';
               } else {
                 if (isCompanionMode && remaining < 2) {
                   cellClass += ' fully-booked';
-                  slotText = '空位 1 (兩人同行需 2 個空位)';
+                  slotText = `空位 ${remaining} (兩人同行需 2 個空位)`;
                 } else {
                   slotText = `空位 ${remaining}`;
                 }

@@ -514,3 +514,358 @@ body {
     text-align: left;
   }
 }
+
+/* Admin Dashboard Styles */
+.admin-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.admin-tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.admin-tab:hover {
+  color: var(--text-primary);
+}
+
+.admin-tab.active {
+  color: var(--accent-indigo);
+  border-bottom-color: var(--accent-indigo);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.admin-card h2 {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
+
+.admin-roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.student-roster-item {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fafaf9;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.student-roster-item:hover {
+  border-color: var(--accent-indigo);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.student-roster-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+}
+
+.student-roster-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.student-roster-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.student-roster-meta {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+}
+
+.student-roster-summary {
+  text-align: right;
+}
+
+.student-roster-fee {
+  font-weight: 700;
+  color: var(--accent-indigo);
+  font-size: 1.1rem;
+}
+
+.student-roster-days {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+}
+
+.student-roster-details {
+  border-top: 1px solid var(--border-color);
+  background: #fafaf9;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.admin-table th, .admin-table td {
+  padding: 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #f5f5f4;
+}
+
+/* Calendar Date Cell overrides for Admin */
+.date-cell-admin {
+  min-height: 140px;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.date-cell-admin.python-week {
+  background: #fef2f2;
+  border-color: #fee2e2;
+}
+
+.date-cell-admin.locked {
+  background: #f5f5f4;
+  opacity: 0.85;
+}
+
+.date-cell-admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.date-cell-admin-number {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.date-cell-admin-weekday {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.date-cell-admin-capacity {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.capacity-badge {
+  background: #e7e5e4;
+  color: var(--text-primary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.capacity-badge.locked {
+  background: var(--accent-rose);
+  color: white;
+}
+
+.capacity-badge.increased {
+  background: var(--accent-emerald);
+  color: white;
+}
+
+.capacity-setter-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.capacity-setter-inline label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.capacity-setter-btn {
+  background: #e7e5e4;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.capacity-setter-btn:hover {
+  background: #d6d3d1;
+}
+
+.date-cell-admin-students {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.admin-student-tag {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-student-tag.companion {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.delete-student-btn {
+  background: none;
+  border: none;
+  color: var(--accent-rose);
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0 0.1rem;
+  font-size: 0.85rem;
+}
+
+.delete-student-btn:hover {
+  color: #b91c1c;
+}
+
+.add-booking-btn-cell {
+  width: 100%;
+  padding: 0.3rem;
+  background: #f5f5f4;
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: center;
+}
+
+.add-booking-btn-cell:hover {
+  background: #e7e5e4;
+  color: var(--text-primary);
+}
+
+.success-banner {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.error-banner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+/* Modal form style */
+.modal-form-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.modal-form-group label {
+  display: block;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.modal-form-group select, .modal-form-group input {
+  width: 100%;
+  padding: 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.modal-form-group select:focus, .modal-form-group input:focus {
+  outline: none;
+  border-color: var(--accent-indigo);
+}
+
