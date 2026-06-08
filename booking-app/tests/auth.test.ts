@@ -9,7 +9,11 @@ import { getDB } from '../lib/db';
 describe('Auth API Routes', () => {
   beforeEach(async () => {
     const db = getDB();
-    await db.del('student:張三:20180815');
+    await db.del('student_lookup:張三:20180815');
+    const studentKeys = await db.keys('student:*');
+    for (const key of studentKeys) {
+      await db.del(key);
+    }
     await db.srem('registered_students', '張三');
   });
 
@@ -34,6 +38,7 @@ describe('Auth API Routes', () => {
     const regRes = await registerPost(regReq);
     const regData = await regRes.json();
     expect(regData.success).toBe(true);
+    expect(regData.user.id).toBeDefined();
 
     const logReq = new Request('http://localhost/api/auth/login', {
       method: 'POST',
@@ -66,5 +71,26 @@ describe('Auth API Routes', () => {
     const valRes2 = await validateGet(valReq2);
     const valData2 = await valRes2.json();
     expect(valData2.valid).toBe(true);
+  });
+
+  it('should prevent double registration', async () => {
+    const regReq1 = new Request('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '張三', birthday: '20180815', parentPhone: '0912345678' })
+    });
+    const regRes1 = await registerPost(regReq1);
+    const regData1 = await regRes1.json();
+    expect(regData1.success).toBe(true);
+
+    const regReq2 = new Request('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '張三', birthday: '20180815', parentPhone: '0912345678' })
+    });
+    const regRes2 = await registerPost(regReq2);
+    const regData2 = await regRes2.json();
+    expect(regData2.success).toBe(false);
+    expect(regData2.error).toBe('already_registered');
   });
 });

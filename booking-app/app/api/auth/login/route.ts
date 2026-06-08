@@ -8,7 +8,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
     }
     const db = getDB();
-    const user = await db.get(`student:${name}:${birthday}`);
+    const studentId = await db.get(`student_lookup:${name}:${birthday}`);
+    if (!studentId) {
+      return NextResponse.json({ success: false, error: 'not_registered' });
+    }
+    const user = await db.get(`student:${studentId}`);
     if (!user) {
       return NextResponse.json({ success: false, error: 'not_registered' });
     }
