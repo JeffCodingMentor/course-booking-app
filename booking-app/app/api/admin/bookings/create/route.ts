@@ -4,11 +4,6 @@ import { sendLineNotification } from '@/lib/notify';
 
 export async function POST(request: Request) {
   try {
-    // 1. Production Guard
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ success: false, error: 'forbidden' }, { status: 403 });
-    }
-
     // 2. Admin Authentication Guard
     const adminToken = request.headers.get('x-admin-token');
     if (adminToken !== 'admin_token_validated') {
