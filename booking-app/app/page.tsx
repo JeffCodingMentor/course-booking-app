@@ -109,7 +109,7 @@ export default function Home() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nameInput.trim() || !birthdayInput.trim() || !phoneInput.trim()) {
+    if (!nameInput.trim() || !birthdayInput.trim()) {
       setErrorMsg('所有欄位皆為必填。');
       return;
     }
@@ -123,8 +123,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: nameInput.trim(),
-          birthday: birthdayInput.trim(),
-          parentPhone: phoneInput.trim()
+          birthday: birthdayInput.trim()
         })
       });
       const data = await res.json();
@@ -147,7 +146,10 @@ export default function Home() {
   };
 
   const handleConfirmRegister = async () => {
-    setShowRegConfirm(false);
+    if (!phoneInput.trim()) {
+      alert('請輸入家長電話。');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
@@ -166,13 +168,39 @@ export default function Home() {
         setNameInput('');
         setBirthdayInput('');
         setPhoneInput('');
+        setShowRegConfirm(false);
       } else {
-        setErrorMsg(data.error || '註冊失敗。');
+        alert(data.error || '註冊失敗。');
       }
     } catch {
-      setErrorMsg('註冊學生時發生錯誤。');
+      alert('註冊學生時發生錯誤。');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdatePhone = async (newPhone: string) => {
+    if (!student) return;
+    try {
+      const res = await fetch('/api/auth/update-phone', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': student.id || ''
+        },
+        body: JSON.stringify({ parentPhone: newPhone })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updatedStudent = { ...student, parentPhone: newPhone };
+        setStudent(updatedStudent);
+        localStorage.setItem('student_session', JSON.stringify(updatedStudent));
+        alert('家長電話修改成功！');
+      } else {
+        alert(`修改失敗: ${data.error}`);
+      }
+    } catch {
+      alert('修改失敗，請稍後再試。');
     }
   };
 
@@ -337,6 +365,13 @@ export default function Home() {
                 type="text"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
+                placeholder="placeholder"
+                style={{ display: 'none' }}
+              />
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
                 placeholder="例如：張三"
                 disabled={loading}
                 required
@@ -353,17 +388,6 @@ export default function Home() {
                 required
               />
             </div>
-            <div className="form-group">
-              <label>家長電話</label>
-              <input
-                type="text"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="例如：0912345678"
-                disabled={loading}
-                required
-              />
-            </div>
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? '處理中...' : '登入系統'}
             </button>
@@ -372,16 +396,45 @@ export default function Home() {
 
         {showRegConfirm && (
           <div className="dialog-overlay">
-            <div className="dialog-box">
-              <h2>學生尚未註冊</h2>
+            <div className="dialog-box" style={{ maxWidth: '400px' }}>
+              <h2>學生註冊</h2>
               <p style={{ color: 'var(--text-secondary)', margin: '1rem 0' }}>
-                系統中查無此學生資料。是否要使用上述填寫的資訊進行註冊？
+                系統中尚未有「{nameInput}」的註冊資料。請填寫家長聯絡電話完成註冊：
               </p>
+              <div className="form-group" style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>家長電話</label>
+                <input
+                  type="text"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="例如：0912345678"
+                  disabled={loading}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    fontSize: '1rem'
+                  }}
+                  required
+                />
+              </div>
               <div className="dialog-actions">
-                <button className="dialog-btn confirm" onClick={handleConfirmRegister}>
-                  確認註冊
+                <button 
+                  className="dialog-btn confirm" 
+                  onClick={handleConfirmRegister}
+                  disabled={loading || !phoneInput.trim()}
+                >
+                  {loading ? '處理中...' : '確認註冊'}
                 </button>
-                <button className="dialog-btn cancel" onClick={() => setShowRegConfirm(false)}>
+                <button 
+                  className="dialog-btn cancel" 
+                  onClick={() => {
+                    setShowRegConfirm(false);
+                    setPhoneInput('');
+                  }}
+                  disabled={loading}
+                >
                   取消
                 </button>
               </div>
@@ -399,6 +452,29 @@ export default function Home() {
         <div className="profile-stats">
           <div className="stat-badge">
             歡迎，<strong>{student.name}</strong>
+          </div>
+          <div className="stat-badge">
+            家長電話：<strong>{student.parentPhone}</strong>
+            <button
+              onClick={() => {
+                const newPhone = prompt('請輸入新的家長電話：', student.parentPhone);
+                if (newPhone !== null && newPhone.trim() !== '' && newPhone.trim() !== student.parentPhone) {
+                  handleUpdatePhone(newPhone.trim());
+                }
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--accent-indigo)',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                textDecoration: 'underline',
+                padding: 0,
+                marginLeft: '0.5rem'
+              }}
+            >
+              修改
+            </button>
           </div>
           <div className="stat-badge">
             預約進度：<strong>{myBookingsCount} / 15 天</strong>

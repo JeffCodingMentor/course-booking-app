@@ -4,6 +4,7 @@
 import { POST as loginPost } from '../app/api/auth/login/route';
 import { POST as registerPost } from '../app/api/auth/register/route';
 import { GET as validateGet } from '../app/api/auth/validate-companion/route';
+import { POST as updatePhonePost } from '../app/api/auth/update-phone/route';
 import { getDB } from '../lib/db';
 
 describe('Auth API Routes', () => {
@@ -92,5 +93,36 @@ describe('Auth API Routes', () => {
     const regData2 = await regRes2.json();
     expect(regData2.success).toBe(false);
     expect(regData2.error).toBe('already_registered');
+  });
+
+  it('should allow student to update their parent phone number', async () => {
+    // 1. Register student
+    const regReq = new Request('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '張三', birthday: '20180815', parentPhone: '0912345678' })
+    });
+    const regRes = await registerPost(regReq);
+    const regData = await regRes.json();
+    const studentId = regData.user.id;
+
+    // 2. Update phone
+    const updateReq = new Request('http://localhost/api/auth/update-phone', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-user-id': studentId
+      },
+      body: JSON.stringify({ parentPhone: '0987654321' })
+    });
+    const updateRes = await updatePhonePost(updateReq);
+    const updateData = await updateRes.json();
+    expect(updateData.success).toBe(true);
+    expect(updateData.user.parentPhone).toBe('0987654321');
+
+    // 3. Verify in DB
+    const db = getDB();
+    const profile = await db.get(`student:${studentId}`) as any;
+    expect(profile.parentPhone).toBe('0987654321');
   });
 });
