@@ -122,7 +122,7 @@ describe('Auth API Routes', () => {
 
     // 3. Verify in DB
     const db = getDB();
-    const profile = await db.get(`student:${studentId}`) as any;
-    expect(profile.parentPhone).toBe('0987654321');
+    const profile = (await db.get(`student:${studentId}`)) as { parentPhone: string } | null;
+    expect(profile?.parentPhone).toBe('0987654321');
   });
 });
