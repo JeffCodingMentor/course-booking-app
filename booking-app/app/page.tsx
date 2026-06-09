@@ -50,6 +50,7 @@ export default function Home() {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelTargetDate, setCancelTargetDate] = useState<string | null>(null);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Bookings map for all calendar dates
   const [bookingData, setBookingData] = useState<Record<string, BookingSlot[]>>({});
@@ -300,7 +301,14 @@ export default function Home() {
 
   if (!student) {
     return (
-      <div className="app-container">
+      <div className="app-container" style={{ position: 'relative' }}>
+        <button
+          className="info-btn"
+          onClick={() => setShowInfoModal(true)}
+          style={{ position: 'absolute', right: '1rem', top: '1rem' }}
+        >
+          說明
+        </button>
         <div className="login-card">
           <h1>Jeff老師暑期班預約系統</h1>
           {errorMsg && <div style={{ color: 'var(--accent-rose)', marginBottom: '1rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
@@ -378,9 +386,14 @@ export default function Home() {
             預約進度：<strong>{myBookingsCount} / 15 天</strong>
           </div>
         </div>
-        <button className="logout-btn" onClick={handleLogout}>
-          登出
-        </button>
+        <div className="header-actions">
+          <button className="info-btn" onClick={() => setShowInfoModal(true)}>
+            說明
+          </button>
+          <button className="logout-btn" onClick={handleLogout}>
+            登出
+          </button>
+        </div>
       </div>
 
       <div className="companion-controls">
@@ -612,6 +625,46 @@ export default function Home() {
                 }}
               >
                 保留預約
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInfoModal && (
+        <div className="dialog-overlay" style={{ zIndex: 110 }}>
+          <div className="dialog-box" style={{ maxWidth: '500px', textAlign: 'left' }}>
+            <h2 style={{ color: 'var(--accent-indigo)', marginBottom: '1.25rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+              2026暑期Scratch班招生說明
+            </h2>
+            <ul style={{ 
+              lineHeight: '2', 
+              color: 'var(--text-primary)', 
+              fontSize: '1rem', 
+              paddingLeft: '1.25rem', 
+              marginBottom: '1.75rem', 
+              listStyleType: 'disc' 
+            }}>
+              <li style={{ marginBottom: '0.5rem' }}>課程以遊戲專題、貓咪盃準備為主</li>
+              <li style={{ marginBottom: '0.5rem' }}>每日下午時段 14:00~17:00</li>
+              <li style={{ marginBottom: '0.5rem' }}>同時段最多2位同學</li>
+              <li style={{ marginBottom: '0.5rem' }}>每堂收費3000元</li>
+              <li style={{ marginBottom: '0.5rem' }}>兩人同行(同一天)9折優惠</li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                上課地點、收費方式請見{' '}
+                <a
+                  href="https://www.im-coding.com/vacation-camp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--accent-indigo)', textDecoration: 'underline', fontWeight: 600 }}
+                >
+                  Im未來官網
+                </a>
+              </li>
+            </ul>
+            <div className="dialog-actions" style={{ justifyContent: 'center' }}>
+              <button className="dialog-btn cancel" onClick={() => setShowInfoModal(false)} style={{ width: '120px', padding: '0.6rem 1.5rem' }}>
+                返回
               </button>
             </div>
           </div>
