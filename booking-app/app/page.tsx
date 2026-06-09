@@ -52,6 +52,10 @@ export default function Home() {
   const [cancelTargetDate, setCancelTargetDate] = useState<string | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
+  // Submitting states for async UI response improvement
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+
   // Bookings map for all calendar dates
   const [bookingData, setBookingData] = useState<Record<string, BookingSlot[]>>({});
   // Custom capacity overrides map
@@ -249,6 +253,7 @@ export default function Home() {
       return;
     }
 
+    setBookingSubmitting(true);
     try {
       const res = await fetch('/api/booking/create', {
         method: 'POST',
@@ -264,21 +269,24 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.success) {
+        await fetchAllBookings();
         setSelectedDates([]);
         setShowBookingConfirm(false);
         setShowSuccessAlert(true);
-        await fetchAllBookings();
       } else {
         alert(`預約失敗: ${data.error}`);
       }
     } catch {
       alert('預約失敗，請稍後再試。');
+    } finally {
+      setBookingSubmitting(false);
     }
   };
 
   const handleCancel = async (date: string) => {
     if (!student) return;
 
+    setCancelSubmitting(true);
     try {
       const res = await fetch('/api/booking/cancel', {
         method: 'POST',
@@ -291,11 +299,15 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         await fetchAllBookings();
+        setShowCancelConfirm(false);
+        setCancelTargetDate(null);
       } else {
         alert(`取消失敗: ${data.error}`);
       }
     } catch {
       alert('取消失敗，請稍後再試。');
+    } finally {
+      setCancelSubmitting(false);
     }
   };
 
@@ -591,10 +603,10 @@ export default function Home() {
               </p>
             )}
             <div className="dialog-actions">
-              <button className="dialog-btn confirm" onClick={handleBatchBook}>
-                確認送出
+              <button className="dialog-btn confirm" onClick={handleBatchBook} disabled={bookingSubmitting}>
+                {bookingSubmitting ? '處理中...' : '確認送出'}
               </button>
-              <button className="dialog-btn cancel" onClick={() => setShowBookingConfirm(false)}>
+              <button className="dialog-btn cancel" onClick={() => setShowBookingConfirm(false)} disabled={bookingSubmitting}>
                 取消
               </button>
             </div>
@@ -630,18 +642,18 @@ export default function Home() {
               <button 
                 className="dialog-btn confirm" 
                 style={{ background: 'var(--accent-rose)' }}
+                disabled={cancelSubmitting}
                 onClick={() => {
                   if (cancelTargetDate) {
                     handleCancel(cancelTargetDate);
                   }
-                  setShowCancelConfirm(false);
-                  setCancelTargetDate(null);
                 }}
               >
-                確認取消
+                {cancelSubmitting ? '處理中...' : '確認取消'}
               </button>
               <button 
                 className="dialog-btn cancel" 
+                disabled={cancelSubmitting}
                 onClick={() => {
                   setShowCancelConfirm(false);
                   setCancelTargetDate(null);
