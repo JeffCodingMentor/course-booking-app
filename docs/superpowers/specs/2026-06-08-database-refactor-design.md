@@ -80,3 +80,19 @@ To support renaming and deleting student records safely in the **Jeff 老師暑�
     1. Deletion fails if a student has active bookings.
     2. Deletion succeeds if a student has 0 bookings, cleaning up all lookup indexes.
     3. Editing names successfully redirects lookup indexes without breaking historical booking relationships.
+
+---
+
+## 5. Frontend UI Enhancements & Usability
+* **Student Reservation Page Centering**:
+  * Centered the main title *"Jeff老師暑期班預約系統"* and profile stat badges (welcome message, progress tracking) on the student reservation home page for a cleaner, unified layout.
+  * Preserved the original left-aligned title layout on the Admin Dashboard.
+* **Enrollment Instructions Dialog**:
+  * Added an **「說明」 (Instructions)** button in the top-right corner of the student page (accessible both when logged out and logged in).
+  * Clicking the button opens a modal displaying the Scratch summer camp rules, pricing discounts, class times, registration link to Im-coding website (`https://www.im-coding.com/vacation-camp/programs/1`), and contact instructions for 1-on-1 classes.
+  * Clicking the **「返回」 (Back)** button inside the modal closes the overlay.
+* **Inline Companion Validation Warnings**:
+  * To avoid user confusion when companion validation blocks date selection:
+    * If "兩人同行" (Companion Mode) is checked but the companion name input is empty, the red validation label directly next to the input displays: `未輸入名字，無法預約`.
+    * If a name is typed but not registered in the database, the label displays: `XXX未註冊，無法預約` (where `XXX` is the input name).
+    * Submitting booking requests with incomplete or unregistered companion details is blocked and triggers alerts.
