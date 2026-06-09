@@ -185,7 +185,7 @@ export default function Home() {
   const checkCompanionStatus = useCallback(async (name: string) => {
     if (!name.trim()) {
       setIsCompanionVerified(false);
-      setCompanionError('');
+      setCompanionError('未輸入名字，無法預約');
       return;
     }
     try {
@@ -196,7 +196,7 @@ export default function Home() {
         setCompanionError('');
       } else {
         setIsCompanionVerified(false);
-        setCompanionError(`「${name} 未註冊」`);
+        setCompanionError(`${name.trim()}未註冊，無法預約`);
       }
     } catch {
       setIsCompanionVerified(false);
@@ -220,7 +220,7 @@ export default function Home() {
     setCompanionName(val);
     if (!val.trim()) {
       setIsCompanionVerified(false);
-      setCompanionError('');
+      setCompanionError('未輸入名字，無法預約');
     }
   };
 
@@ -413,6 +413,11 @@ export default function Home() {
                 setCompanionName('');
                 setIsCompanionVerified(false);
                 setCompanionError('');
+              } else {
+                if (!companionName.trim()) {
+                  setIsCompanionVerified(false);
+                  setCompanionError('未輸入名字，無法預約');
+                }
               }
               setSelectedDates([]);
             }}
