@@ -233,9 +233,15 @@ export default function Home() {
   const handleBatchBook = async () => {
     if (!student || selectedDates.length === 0) return;
 
-    if (isCompanionMode && !isCompanionVerified) {
-      alert('請先輸入並驗證已註冊的同行者姓名。');
-      return;
+    if (isCompanionMode) {
+      if (!companionName.trim()) {
+        alert('未輸入名字，無法預約');
+        return;
+      }
+      if (!isCompanionVerified) {
+        alert(`${companionName.trim()}未註冊，無法預約`);
+        return;
+      }
     }
 
     if (myBookingsCount + selectedDates.length > 15) {
@@ -444,7 +450,19 @@ export default function Home() {
             className="submit-btn"
             style={{ width: 'auto', padding: '0.6rem 2rem', opacity: selectedDates.length > 0 ? 1 : 0.5 }}
             disabled={selectedDates.length === 0}
-            onClick={() => setShowBookingConfirm(true)}
+            onClick={() => {
+              if (isCompanionMode) {
+                if (!companionName.trim()) {
+                  alert('未輸入名字，無法預約');
+                  return;
+                }
+                if (!isCompanionVerified) {
+                  alert(`${companionName.trim()}未註冊，無法預約`);
+                  return;
+                }
+              }
+              setShowBookingConfirm(true);
+            }}
           >
             確認預約 ({selectedDates.length} 天)
           </button>
