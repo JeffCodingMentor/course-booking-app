@@ -646,14 +646,17 @@ export default function Home() {
               listStyleType: 'disc' 
             }}>
               <li style={{ marginBottom: '0.5rem' }}>課程以遊戲專題、貓咪盃準備為主</li>
-              <li style={{ marginBottom: '0.5rem' }}>每日下午時段 14:00~17:00</li>
+              <li style={{ marginBottom: '0.5rem' }}>僅開放下午時段 14:00~17:00</li>
               <li style={{ marginBottom: '0.5rem' }}>同時段最多2位同學</li>
-              <li style={{ marginBottom: '0.5rem' }}>每堂收費3000元</li>
+              <li style={{ marginBottom: '0.5rem' }}>每堂特價3000元(原價3600)</li>
               <li style={{ marginBottom: '0.5rem' }}>兩人同行(同一天)9折優惠</li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                兩位同學<strong>都註冊</strong>後再用兩人同行方式選時段才有優惠
+              </li>
               <li style={{ marginBottom: '0.5rem' }}>
                 上課地點、收費方式請見{' '}
                 <a
-                  href="https://www.im-coding.com/vacation-camp"
+                  href="https://www.im-coding.com/vacation-camp/programs/1"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: 'var(--accent-indigo)', textDecoration: 'underline', fontWeight: 600 }}
@@ -661,6 +664,7 @@ export default function Home() {
                   Im未來官網
                 </a>
               </li>
+              <li style={{ marginBottom: '0.5rem' }}>一對一線上課請先聯絡Jeff老師</li>
             </ul>
             <div className="dialog-actions" style={{ justifyContent: 'center' }}>
               <button className="dialog-btn cancel" onClick={() => setShowInfoModal(false)} style={{ width: '120px', padding: '0.6rem 1.5rem' }}>
