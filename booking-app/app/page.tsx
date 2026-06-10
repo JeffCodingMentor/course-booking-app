@@ -477,7 +477,7 @@ export default function Home() {
             </button>
           </div>
           <div className="stat-badge">
-            預約進度：<strong>{myBookingsCount} / 15 天</strong>
+            預約天數：<strong>{myBookingsCount} 天</strong>
           </div>
         </div>
         <div className="header-actions">
