@@ -773,7 +773,7 @@ export default function Home() {
                   Im未來官網
                 </a>
               </li>
-              <li style={{ marginBottom: '0.5rem' }}>一對一線上課請先聯絡Jeff老師</li>
+              <li style={{ marginBottom: '0.5rem' }}>Python課、一對一線上課請先聯絡Jeff老師</li>
             </ul>
             <div className="dialog-actions" style={{ justifyContent: 'center' }}>
               <button className="dialog-btn cancel" onClick={() => setShowInfoModal(false)} style={{ width: '120px', padding: '0.6rem 1.5rem' }}>
