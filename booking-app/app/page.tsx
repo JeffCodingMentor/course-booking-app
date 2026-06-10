@@ -646,7 +646,7 @@ export default function Home() {
                       {displayDate} <span className="mobile-weekday">({weekdayName})</span>
                     </span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      W{weekIdx + 1}
+                      W{weekIdx + 3}
                     </span>
                   </div>
                   <div className="slot-indicator">{slotText}</div>
