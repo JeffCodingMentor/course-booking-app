@@ -55,11 +55,10 @@ The database operates on an **ID-centric** architecture. All data relationships 
   * **Booked by User**: Highlighted green border. Displays `"上課"` (or `"與 [Companion] 上課"`) and a **[取消]** button.
 * **Date Hover Highlight**: Moving the mouse over a clickable date cell (which has `.selectable-cell` class) shows a smooth transition highlighting the border in indigo and adding a subtle card shadow.
 
-### 3.4 Special Exception: Python Class Week
-* The week of **2026/08/03 to 2026/08/07** is reserved for the "Python" class.
-* These 5 days are permanently locked, showing **"額滿"** in red.
-* Hovering over these days displays a tooltip/hover effect labeled **"Python"**.
-* The booking API blocks any attempts to book these dates.
+### 3.4 Default Locked Week (2026/08/03 ~ 2026/08/07)
+* The week of **2026/08/03 to 2026/08/07** has a default capacity of `0` slots.
+* It displays as **"額滿"** in red by default.
+* Like any other date, this week can be overridden and unlocked/modified by the teacher in the Admin Dashboard (by setting capacity > 0), which dynamically allows student booking.
 
 ### 3.5 2-Person Group Booking (兩人同行)
 * Enabled via a checkbox. Requires typing a companion's name.
