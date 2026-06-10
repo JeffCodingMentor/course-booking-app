@@ -169,6 +169,7 @@ export default function Home() {
         setBirthdayInput('');
         setPhoneInput('');
         setShowRegConfirm(false);
+        setShowInfoModal(true);
       } else {
         alert(data.error || '註冊失敗。');
       }
