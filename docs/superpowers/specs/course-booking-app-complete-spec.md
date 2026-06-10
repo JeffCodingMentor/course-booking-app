@@ -47,6 +47,7 @@ The database operates on an **ID-centric** architecture. All data relationships 
   * Upon successful registration, the "說明" (Instructions) modal is automatically popped up to guide the user. Subsequent normal logins do not trigger this popup.
 
 ### 3.2 Student Profile & Phone Update
+* **Centered Layout**: The student page's main title `"Jeff老師暑期班預約系統"` and the profile stats bar are centered to provide a clean, symmetric premium look. In contrast, the Admin Dashboard title and layout remain left-aligned.
 * Once logged in, the student status bar displays:
   * Student Name (歡迎，**姓名**)
   * Parent Phone (家長電話：**09xxxxxxxx** [修改])
@@ -60,7 +61,8 @@ The database operates on an **ID-centric** architecture. All data relationships 
 * **Slot Capacity States**:
   * **Remaining Capacity >= 1**: Clickable. Displays `"空位 X"`.
   * **Remaining Capacity = 0**: Disabled. Displays `"額滿"` in red.
-  * **Booked by User**: Highlighted green border. Displays `"上課"` (or `"與 [Companion] 上課"`) and a **[取消]** button.
+  * **Booked by User**: Highlighted with a green border (`border-color: var(--accent-emerald)`) and a light green background tint. Displays `"上課"` (or `"與 [Companion] 上課"`) and a **[取消]** button.
+  * **Selected Cell State**: Clicked date cells are highlighted with an orange border (`border-color: var(--accent-indigo)` at 2px width) and a warm orange background tint (`background: rgba(249, 115, 22, 0.08)`).
 * **Date Hover Highlight**: Moving the mouse over a clickable date cell (which has `.selectable-cell` class) shows a smooth transition highlighting the border in indigo and adding a subtle card shadow.
 
 ### 3.4 Default Locked Week (2026/08/03 ~ 2026/08/07)
