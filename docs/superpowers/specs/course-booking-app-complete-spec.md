@@ -93,11 +93,20 @@ An isolated back-office module allowing Jeff老師 to log in and manage the syst
 * Authenticates via `POST /api/admin/login` using `ADMIN_PASSWORD` env variable. Writes `admin_session` to cookies/localStorage. All `/api/admin/*` endpoints require authentication.
 
 ### 4.2 Calendar Override & Capacity Management
-* Renders the 6-week weekday calendar with capacity bars and lists of booked students.
+* **Renders 6-Week Calendar**: Displays capacity bars and the list of booked students per day.
 * **Lock/Unlock**: Teachers can adjust capacity overrides (`POST /api/admin/capacity`) to lock dates (capacity = 0) or override slots (e.g. increase to 3).
-* **Manual Actions**: Can click "手動新增預約" or "取消預約" next to any student's name.
 
-### 4.3 Student Roster & Tuition Ledger
+### 4.3 Manual Bookings & Cancellation Actions
+* **Manual Booking (`POST /api/admin/bookings/create`)**:
+  * Allows the admin to manually place booking dates for any registered student.
+  * Bypasses the student-side authentication token check, verifying the admin session instead.
+  * Checks slots capacity limits and student overlap, then writes slots.
+  * **LINE Notification Bypass**: Bypasses LINE Notify alerts (does NOT send notification) to prevent spamming the group with admin manual edits.
+* **Manual Cancellation (`POST /api/admin/bookings/cancel`)**:
+  * Allows the admin to cancel any slot next to a student's name.
+  * **LINE Notification Bypass**: Bypasses LINE Notify alerts (does NOT send notification).
+
+### 4.4 Student Roster & Tuition Ledger
 * **Student List**: Returns all registered students along with class counts and detailed tuition totals.
 * **Ledger Drawer**: Expands to show details per student:
   * List of booked dates, booking type (單人 $3,000 / 兩人同行 $2,700), and tuition totals.
