@@ -186,6 +186,11 @@ body {
   position: relative;
 }
 
+.date-cell.selectable-cell:hover {
+  border-color: var(--accent-indigo);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
 .date-number {
   font-weight: 600;
   font-size: 1rem;

@@ -629,6 +629,10 @@ export default function Home() {
                 cellClass += ' selected-cell';
               }
 
+              if (isSelectable) {
+                cellClass += ' selectable-cell';
+              }
+
               const handleCellClick = () => {
                 if (isSelectable) {
                   toggleDateSelection(dateStr);
