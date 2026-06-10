@@ -349,13 +349,6 @@ export default function Home() {
   if (!student) {
     return (
       <div className="app-container" style={{ position: 'relative' }}>
-        <button
-          className="info-btn"
-          onClick={() => setShowInfoModal(true)}
-          style={{ position: 'absolute', right: '1rem', top: '1rem' }}
-        >
-          說明
-        </button>
         <div className="login-card">
           <h1>Jeff老師暑期班預約系統</h1>
           {errorMsg && <div style={{ color: 'var(--accent-rose)', marginBottom: '1rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
