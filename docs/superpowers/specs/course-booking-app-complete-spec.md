@@ -146,3 +146,20 @@ Dispatched in markdown format via `POST https://v2.chateverywhere.app/api/line/n
 * **Auth Tests**: Covers registration, login, companion validation cache, double-registration prevention, and parent phone self-updating.
 * **Booking Tests**: Covers validation rules, slot allocation, limit guards (15 bookings), companion checks, and LINE notification dispatches.
 * **Admin Tests**: Covers manual booking/cancelling, capacity overrides, student edits (safe renames), student deletions, and LINE Notify bypass validation.
+
+---
+
+## 9. Appendix A: Enrollment Instructions Text (招生說明文字內容)
+The following is the literal text content rendered within the "說明" (Instructions) modal dialog on the student page:
+
+```text
+2026暑期Scratch班招生說明
+- 課程以遊戲專題、貓咪盃準備為主
+- 僅開放下午時段 14:00~17:00
+- 同時段最多2位同學
+- 每堂特價3000元(原價3600)
+- 兩人同行(同一天)9折優惠
+- 兩位同學都註冊後再用兩人同行方式選時段才有優惠
+- 上課地點、收費方式請見[Im未來官網](https://www.im-coding.com/vacation-camp/programs/1)
+- Python課、一對一線上課請先聯絡Jeff老師
+```
