@@ -12,6 +12,14 @@ The system is designed for students to register and book course dates for a 6-we
 * **Notifications**: ChatEverywhere LINE Notify API.
 * **Testing**: Jest & React Testing Library (Unit & integration tests).
 
+### Environment Variables
+The application utilizes the following environment variables for production integrations:
+* `ADMIN_PASSWORD`: Security password required to access the teacher admin dashboard (`/admin/dashboard`).
+* `CHAT_EVERYWHERE_TOKEN`: Authorization bearer token used to call the ChatEverywhere LINE Notify API.
+* Upstash Redis Configuration (If omitted, the server automatically defaults to an in-memory mock database for local development):
+  * `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN` (Primary connection parameters)
+  * `KV_REST_API_URL` & `KV_REST_API_TOKEN` (Alternative/fallback connection parameters)
+
 ---
 
 ## 2. Database Schema (Upstash Redis)
