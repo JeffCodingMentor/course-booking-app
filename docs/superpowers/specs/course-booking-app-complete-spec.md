@@ -8,13 +8,13 @@ The system is designed for students to register and book course dates for a 6-we
 ### Technology Stack
 * **Frontend**: Next.js (App Router, Client Components) with Vanilla CSS (Modern premium design system, warm colors).
 * **Backend**: Next.js API Routes.
-* **Database**: Vercel KV (Redis) / Upstash. Supports an in-memory database mock fallback during local development.
+* **Database**: Upstash Redis. Supports an in-memory database mock fallback during local development.
 * **Notifications**: ChatEverywhere LINE Notify API.
 * **Testing**: Jest & React Testing Library (Unit & integration tests).
 
 ---
 
-## 2. Database Schema (Vercel KV / Redis)
+## 2. Database Schema (Upstash Redis)
 The database operates on an **ID-centric** architecture. All data relationships are bound via unique, immutable student IDs rather than names.
 
 | Key Type | Key Format | Value Structure | Purpose |
