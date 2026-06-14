@@ -557,11 +557,11 @@ export default function Home() {
 
         <div className="calendar-grid-container">
           <div className="grid-headers-wrapper">
-            <div className="grid-header">週一</div>
-            <div className="grid-header">週二</div>
-            <div className="grid-header">週三</div>
-            <div className="grid-header">週四</div>
-            <div className="grid-header">週五</div>
+            <div className="grid-header"><span className="weekday-prefix">週</span>一</div>
+            <div className="grid-header"><span className="weekday-prefix">週</span>二</div>
+            <div className="grid-header"><span className="weekday-prefix">週</span>三</div>
+            <div className="grid-header"><span className="weekday-prefix">週</span>四</div>
+            <div className="grid-header"><span className="weekday-prefix">週</span>五</div>
           </div>
 
           <div className="calendar-weeks-list">
@@ -618,6 +618,17 @@ export default function Home() {
                 }
               }
 
+              let mobileSlotText = '';
+              if (myBooking) {
+                mobileSlotText = myBooking.bookingType === 'companion' ? '同行' : '上課';
+              } else if (capacity === 0 || slots.length >= capacity) {
+                mobileSlotText = '滿';
+              } else if (isCompanionMode && remaining < 2) {
+                mobileSlotText = '滿';
+              } else {
+                mobileSlotText = `空${remaining}`;
+              }
+
               if (isSelected) {
                 cellClass += ' selected-cell';
               }
@@ -629,6 +640,9 @@ export default function Home() {
               const handleCellClick = () => {
                 if (isSelectable) {
                   toggleDateSelection(dateStr);
+                } else if (myBooking) {
+                  setCancelTargetDate(dateStr);
+                  setShowCancelConfirm(true);
                 }
               };
 
@@ -636,7 +650,7 @@ export default function Home() {
                 <div
                   key={dateStr}
                   className={cellClass}
-                  style={{ cursor: isSelectable ? 'pointer' : 'default' }}
+                  style={{ cursor: (isSelectable || myBooking) ? 'pointer' : 'default' }}
                   onClick={handleCellClick}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -647,7 +661,10 @@ export default function Home() {
                       W{weekIdx + 3}
                     </span>
                   </div>
-                  <div className="slot-indicator">{slotText}</div>
+                  <div className="slot-indicator">
+                    <span className="desktop-slot-text">{slotText}</span>
+                    <span className="mobile-slot-text">{mobileSlotText}</span>
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: '26px' }}>{actionElement}</div>
                 </div>
               );
