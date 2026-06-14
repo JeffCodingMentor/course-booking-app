@@ -251,6 +251,19 @@ body {
   box-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
 }
 
+.date-cell.past-date {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  background: #f5f5f4 !important;
+  border-color: #e7e5e4 !important;
+  pointer-events: none;
+}
+
+.date-cell.past-date.my-booking {
+  background: rgba(16, 185, 129, 0.04) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
 .cancel-btn {
   padding: 0.35rem 0.5rem;
   background: var(--accent-rose);

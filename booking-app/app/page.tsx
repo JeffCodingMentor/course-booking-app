@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { getTaipeiToday } from '@/lib/date';
 
 interface BookingSlot {
   studentName: string;
@@ -574,6 +575,7 @@ export default function Home() {
               const weekdayName = weekdays[dayIdx];
               const slots = bookingData[dateStr] || [];
               const myBooking = slots.find((s) => s.studentName === student.name);
+              const isPast = dateStr <= getTaipeiToday();
 
               let cellClass = 'date-cell';
               let actionElement = null;
@@ -585,7 +587,7 @@ export default function Home() {
               const defaultCapacity = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'].includes(dateStr) ? 0 : 2;
               const capacity = capacityData[dateStr] ?? defaultCapacity;
               const remaining = capacity - slots.length;
-              const isSelectable = !myBooking && capacity > 0 && (isCompanionMode ? (isCompanionVerified && remaining >= 2) : (remaining >= 1));
+              const isSelectable = !isPast && !myBooking && capacity > 0 && (isCompanionMode ? (isCompanionVerified && remaining >= 2) : (remaining >= 1));
 
               if (myBooking) {
                 cellClass += ' my-booking';
@@ -594,18 +596,20 @@ export default function Home() {
                     ? `與 ${myBooking.companionName} `
                     : '';
                 slotText = `${companionText}上課`;
-                actionElement = (
-                  <button 
-                    className="cancel-btn" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCancelTargetDate(dateStr);
-                      setShowCancelConfirm(true);
-                    }}
-                  >
-                    取消
-                  </button>
-                );
+                if (!isPast) {
+                  actionElement = (
+                    <button 
+                      className="cancel-btn" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCancelTargetDate(dateStr);
+                        setShowCancelConfirm(true);
+                      }}
+                    >
+                      取消
+                    </button>
+                  );
+                }
               } else if (capacity === 0 || slots.length >= capacity) {
                 cellClass += ' fully-booked';
                 slotText = '額滿';
@@ -637,7 +641,12 @@ export default function Home() {
                 cellClass += ' selectable-cell';
               }
 
+              if (isPast) {
+                cellClass += ' past-date';
+              }
+
               const handleCellClick = () => {
+                if (isPast) return;
                 if (isSelectable) {
                   toggleDateSelection(dateStr);
                 } else if (myBooking) {
@@ -650,7 +659,7 @@ export default function Home() {
                 <div
                   key={dateStr}
                   className={cellClass}
-                  style={{ cursor: (isSelectable || myBooking) ? 'pointer' : 'default' }}
+                  style={{ cursor: (!isPast && (isSelectable || myBooking)) ? 'pointer' : 'default' }}
                   onClick={handleCellClick}
                 >
                   <div className="date-cell-header">
