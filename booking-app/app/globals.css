@@ -196,6 +196,12 @@ body {
   font-size: 1rem;
 }
 
+.date-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .slot-indicator {
   font-size: 18px;
   color: var(--text-secondary);
@@ -500,7 +506,18 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
     gap: 0.25rem;
+    text-align: center;
+  }
+
+  .date-cell-header {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .week-label {
+    display: none;
   }
 
   .date-cell .date-number {
@@ -527,6 +544,8 @@ body {
   .slot-indicator {
     margin: 0;
     font-size: 0.7rem;
+    text-align: center;
+    width: 100%;
   }
 }
 

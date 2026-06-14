@@ -653,11 +653,11 @@ export default function Home() {
                   style={{ cursor: (isSelectable || myBooking) ? 'pointer' : 'default' }}
                   onClick={handleCellClick}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="date-cell-header">
                     <span className="date-number">
                       {displayDate} <span className="mobile-weekday">({weekdayName})</span>
                     </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    <span className="week-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       W{weekIdx + 3}
                     </span>
                   </div>
