@@ -665,7 +665,7 @@ export default function Home() {
                     <span className="desktop-slot-text">{slotText}</span>
                     <span className="mobile-slot-text">{mobileSlotText}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: '26px' }}>{actionElement}</div>
+                  <div className="cell-action-container" style={{ display: 'flex', justifyContent: 'flex-end', minHeight: '26px' }}>{actionElement}</div>
                 </div>
               );
                 })}
