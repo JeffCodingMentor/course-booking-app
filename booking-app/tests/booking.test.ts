@@ -204,4 +204,30 @@ describe('Booking API Endpoints', () => {
     expect(data.success).toBe(false);
     expect(data.error).toBe('past_date_locked');
   });
+
+  it('should reject booking creation with malformed dates', async () => {
+    const req = new Request('http://localhost/api/booking/create', {
+      method: 'POST',
+      headers: await createHeaders(mockUser),
+      body: JSON.stringify({ dates: ['invalid-date', 123, null], isCompanionMode: false, companionName: null })
+    });
+    const res = await createBooking(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('invalid_inputs');
+  });
+
+  it('should reject booking cancellation with malformed date', async () => {
+    const req = new Request('http://localhost/api/booking/cancel', {
+      method: 'POST',
+      headers: await createHeaders(mockUser),
+      body: JSON.stringify({ date: 'invalid-date' })
+    });
+    const res = await cancelBooking(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('invalid_inputs');
+  });
 });

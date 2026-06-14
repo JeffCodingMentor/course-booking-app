@@ -36,7 +36,8 @@ export async function POST(request: Request) {
 
     const { date } = await request.json();
 
-    if (!date) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!date || typeof date !== 'string' || !dateRegex.test(date)) {
       return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
     }
 

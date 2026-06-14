@@ -38,7 +38,11 @@ export async function POST(request: Request) {
     }
 
     const today = getTaipeiToday();
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     for (const date of dates) {
+      if (typeof date !== 'string' || !dateRegex.test(date)) {
+        return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
+      }
       if (date <= today) {
         return NextResponse.json({ success: false, error: 'past_date_locked' }, { status: 400 });
       }
