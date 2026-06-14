@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { sendLineCancelNotification } from '@/lib/notify';
+import { getTaipeiToday } from '@/lib/date';
 
 interface DBBookingSlot {
   studentId: string;
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
 
     if (!date) {
       return NextResponse.json({ success: false, error: 'invalid_inputs' }, { status: 400 });
+    }
+
+    const today = getTaipeiToday();
+    if (date <= today) {
+      return NextResponse.json({ success: false, error: 'past_date_locked' }, { status: 400 });
     }
 
     const rawSlots = await db.get(`booking:${date}`);

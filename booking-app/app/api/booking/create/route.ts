@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { sendLineNotification } from '@/lib/notify';
+import { getTaipeiToday } from '@/lib/date';
 
 interface StudentProfile {
   id: string;
@@ -34,6 +35,13 @@ export async function POST(request: Request) {
     // Ensure all dates in the request are unique to avoid self-overlap
     if (new Set(dates).size !== dates.length) {
       return NextResponse.json({ success: false, error: 'already_booked' });
+    }
+
+    const today = getTaipeiToday();
+    for (const date of dates) {
+      if (date <= today) {
+        return NextResponse.json({ success: false, error: 'past_date_locked' }, { status: 400 });
+      }
     }
 
     // 2. Validate companion registration if companion mode is enabled
