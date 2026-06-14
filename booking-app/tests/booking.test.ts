@@ -177,4 +177,31 @@ describe('Booking API Endpoints', () => {
     slots = (await db.get('booking:2026-07-20')) as TestBookingSlot[];
     expect(slots || []).toHaveLength(0);
   });
+
+  it('should reject booking creation on past/current dates', async () => {
+    // 2026-05-01 is in the past compared to current date of June 2026
+    const req = new Request('http://localhost/api/booking/create', {
+      method: 'POST',
+      headers: await createHeaders(mockUser),
+      body: JSON.stringify({ dates: ['2026-05-01'], isCompanionMode: false, companionName: null })
+    });
+    const res = await createBooking(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('past_date_locked');
+  });
+
+  it('should reject booking cancellation on past/current dates', async () => {
+    const req = new Request('http://localhost/api/booking/cancel', {
+      method: 'POST',
+      headers: await createHeaders(mockUser),
+      body: JSON.stringify({ date: '2026-05-01' })
+    });
+    const res = await cancelBooking(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('past_date_locked');
+  });
 });
